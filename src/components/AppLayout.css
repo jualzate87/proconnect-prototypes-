@@ -1,0 +1,66 @@
+.app-layout {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg-white);
+}
+
+.app-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.app-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg-page);
+}
+
+/* Center scrollable content area */
+.app-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app-form-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 32px;
+  background: var(--bg-white);
+  margin: 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+/* Preview mode — read-only visual (scrolling still allowed) */
+.app-form-area--preview {
+  opacity: 0.82;
+  border-color: #f0c040;
+  border-width: 2px;
+}
+
+/* Block interaction on inputs/buttons but NOT the scroll container */
+.app-form-area--preview input,
+.app-form-area--preview textarea,
+.app-form-area--preview button:not(.employer-tab):not(.employer-tab-add):not(.view-all-btn) {
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Allow tab switching while in preview */
+.app-form-area--preview .employer-tab,
+.app-form-area--preview .employer-tab-add,
+.app-form-area--preview .view-all-btn {
+  pointer-events: auto;
+  opacity: 0.7;
+  cursor: default;
+}

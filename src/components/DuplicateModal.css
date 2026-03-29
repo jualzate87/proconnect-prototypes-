@@ -1,0 +1,72 @@
+.duplicate-modal {
+  width: 440px;
+}
+
+.duplicate-modal-source {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin: 4px 0 0;
+}
+
+.duplicate-modal-label {
+  display: block;
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.duplicate-modal-input {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: var(--font-size-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-white);
+  color: var(--text-primary);
+  font-family: var(--font);
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+.duplicate-modal-input:focus {
+  outline: none;
+  border-color: var(--action-primary);
+  box-shadow: 0 0 0 3px rgba(0,97,230,0.12);
+}
+.duplicate-modal-input:disabled {
+  background: var(--bg-page);
+  opacity: 0.7;
+}
+
+.duplicate-modal-hint {
+  font-size: var(--font-size-sm);
+  color: var(--text-tertiary);
+  margin: 6px 0 0;
+}
+
+/* Success state */
+.duplicate-modal-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0 4px;
+  text-align: center;
+  gap: 8px;
+}
+
+.duplicate-modal-check {
+  margin-bottom: 4px;
+}
+
+.duplicate-modal-success h2 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.duplicate-modal-success p {
+  font-size: var(--font-size-md);
+  color: var(--text-secondary);
+  margin: 0;
+}

@@ -1,0 +1,60 @@
+.right-rail {
+  width: 76px;
+  height: 100%;
+  background: var(--bg-white);
+  border-left: 1px solid var(--divider);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0;
+  gap: 2px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.rail-item {
+  width: 68px;
+  min-height: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 4px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+  position: relative;
+}
+
+.rail-item:hover {
+  background: var(--bg-page);
+  color: var(--text-primary);
+}
+
+.rail-item--active {
+  background: var(--primary-light);
+  color: var(--action-primary);
+}
+.rail-item--active svg { color: var(--action-primary); }
+
+/* NEW badge — pink/magenta per Figma */
+.rail-badge {
+  position: absolute;
+  top: 5px;
+  right: 4px;
+  background: var(--badge-new);
+  color: white;
+  font-size: 8px;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 3px;
+  line-height: 1.4;
+  letter-spacing: 0.4px;
+}

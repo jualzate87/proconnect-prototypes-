@@ -1,0 +1,80 @@
+.left-nav {
+  width: 60px;
+  height: 100%;
+  background: var(--nav-bg);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+
+.left-nav-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 17px 0 16px;
+  flex-shrink: 0;
+}
+
+.left-nav-items {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.left-nav-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  padding-bottom: 4px;
+}
+
+.left-nav-item {
+  width: 60px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--nav-bg);
+  color: rgba(255, 255, 255, 0.75);
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.left-nav-item svg {
+  width: 20px;
+  height: 20px;
+}
+
+.left-nav-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.left-nav-item--active {
+  background: var(--nav-bg-active);
+  color: white;
+  position: relative;
+}
+
+.left-nav-item--active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: white;
+}
+
+.left-nav-divider {
+  width: 100%;
+  height: 1px;
+  background: var(--nav-divider);
+  margin: 8px 0;
+}

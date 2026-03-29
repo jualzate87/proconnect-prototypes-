@@ -1,0 +1,447 @@
+/* ─── Screen wrapper ─── */
+.screen {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-bottom: 32px;
+}
+
+/* ─── Title row ─── */
+.screen-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.screen-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+
+/* ─── Employer tabs (filter pills) ─── */
+.employer-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.employer-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.employer-tab:hover { border-color: var(--text-secondary); }
+.employer-tab--active {
+  background: #e6f0ff;
+  border-color: var(--action-primary);
+  color: var(--action-primary);
+}
+
+.employer-tab-close {
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0.6;
+}
+.employer-tab-close:hover { opacity: 1; }
+
+.employer-tab-add {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.employer-tab-add:hover { background: var(--bg-page); color: var(--text-primary); }
+
+.view-all-btn {
+  margin-left: auto;
+  padding: 4px 10px;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.view-all-btn:hover { background: var(--bg-page); }
+
+/* ─── Tax form table ─── */
+.tax-table {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--divider);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.tax-section-header {
+  padding: 8px 14px;
+  background: #f0f2f5;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--divider);
+  display: flex;
+  align-items: center;
+}
+
+.tax-section-header--import {
+  background: #f0f6ff;
+  color: var(--action-primary);
+  border-left: 3px solid var(--action-primary);
+}
+
+.tax-row {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--divider);
+  min-height: 40px;
+}
+.tax-row:last-child { border-bottom: none; }
+.tax-row:hover { background: #fafbfc; }
+
+/* Input-level highlight — applied via inline style from audit log hover / preview */
+.tax-input-cell input,
+.tax-input-cell textarea {
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.tax-label {
+  flex: 0 0 45%;
+  padding: 8px 14px;
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
+  border-right: 1px solid var(--divider);
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+}
+
+.tax-input-cell {
+  flex: 1;
+  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tax-input-cell input,
+.tax-input-cell textarea {
+  flex: 1;
+  padding: 6px 10px;
+  font-size: var(--font-size-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-white);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.tax-input-cell input:focus,
+.tax-input-cell textarea:focus { border-color: var(--action-primary); }
+
+.tax-input-cell textarea {
+  resize: vertical;
+  min-height: 60px;
+  align-self: stretch;
+}
+
+/* City/State/ZIP split row */
+.tax-input-cell--split { gap: 6px; overflow: hidden; }
+.tax-input-city { flex: 3 !important; min-width: 0; }
+.tax-input-state { flex: 1 !important; min-width: 36px; }
+.tax-input-zip { flex: 2 !important; min-width: 0; }
+
+/* ─── Investment transaction rows ─── */
+.invest-transaction-row .tax-label {
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.invest-tx-cells {
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.invest-tx-date {
+  flex: 0 0 90px !important;
+  font-size: 12px !important;
+}
+
+.invest-tx-amt {
+  flex: 0 0 72px !important;
+  font-size: 12px !important;
+  text-align: right;
+}
+
+.invest-tx-gain {
+  flex: 0 0 68px !important;
+  font-size: 12px !important;
+  text-align: right;
+  background: var(--bg-page) !important;
+  color: var(--text-secondary) !important;
+  font-style: italic;
+}
+
+/* ─── Legacy form styles (kept for Invest/Interest/Others screens) ─── */
+.screen-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+}
+
+.screen-header h1 {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.screen-header p {
+  font-size: var(--font-size-md);
+  color: var(--text-secondary);
+  margin: 4px 0 0;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.form-section h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--divider);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: var(--font-size-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-white);
+  color: var(--text-primary);
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--action-primary);
+}
+
+.input-suffix {
+  font-size: var(--font-size-sm);
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+.info-box {
+  background: #eef4ff;
+  border-left: 4px solid var(--action-primary);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  margin-top: 4px;
+}
+
+/* ─── Guides screen ─── */
+.guides-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.guide-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-sm);
+  background: var(--bg-white);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.guide-item:hover {
+  border-color: var(--action-primary);
+  background: #eef4ff;
+}
+
+.guide-item input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--action-primary);
+}
+
+.guide-item-content { flex: 1; }
+
+.guide-item-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: var(--font-size-md);
+  margin: 0;
+}
+
+.guide-item-desc {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin: 2px 0 0;
+}
+
+/* ─── Dispositions table ─── */
+
+/* Column header row */
+.disp-col-header {
+  display: flex;
+  align-items: center;
+  background: #f0f2f5;
+  border-bottom: 1px solid var(--divider);
+  padding: 0 14px;
+  min-height: 32px;
+}
+
+.disp-th {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 6px 6px 6px 0;
+}
+
+/* Data row — extends .tax-row */
+.disp-data-row {
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 6px;
+}
+
+/* Shared column widths — header and data use same tokens */
+.disp-th--no,  .disp-td--no  { width: 22px; flex-shrink: 0; color: var(--text-tertiary); font-size: var(--font-size-sm); }
+.disp-th--desc,.disp-td--desc { flex: 1; min-width: 0; }
+.disp-th--date,.disp-td--date { width: 108px; flex-shrink: 0; }
+.disp-th--num, .disp-td--num  { width: 100px; flex-shrink: 0; text-align: right; }
+
+.disp-td { display: flex; align-items: center; padding: 4px 6px 4px 0; }
+.disp-td input.tax-input { width: 100%; text-align: left; }
+.disp-td--num input.tax-input { text-align: right; }
+
+/* Computed (read-only) gain/loss cell */
+.disp-td--computed {
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  justify-content: flex-end;
+}
+.disp-loss { color: #dc2626; }
+
+/* Add row button */
+.disp-add-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: var(--font-size-sm);
+  color: var(--action-primary);
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--divider);
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: background 0.12s;
+}
+.disp-add-row:hover { background: var(--bg-hover); }
+
+/* Subtotal row */
+.disp-subtotal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: #f0f2f5;
+  border-top: 1px solid var(--divider);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+.disp-subtotal-label { color: var(--text-secondary); }
+.disp-subtotal-value { font-variant-numeric: tabular-nums; color: var(--text-primary); }
+
+/* Net total row */
+.disp-net-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #f0f2f5;
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.disp-net-value { font-variant-numeric: tabular-nums; }
+
+/* ─── Import source badge (K-1s, etc.) ─── */
+.import-source-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #ede9fe;
+  color: #6d28d9;
+  border: 1px solid #c4b5fd;
+}

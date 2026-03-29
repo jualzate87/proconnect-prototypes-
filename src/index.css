@@ -1,0 +1,77 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  /* Brand colors from Figma */
+  --nav-bg: #055393;
+  --nav-bg-active: #053d6d;
+  --nav-divider: #727e85;
+
+  /* Action colors */
+  --action-primary: #205ea3;
+  --action-primary-hover: #1a4d87;
+
+  /* Text */
+  --text-primary: #393a3d;
+  --text-secondary: #5d686f;
+  --text-tertiary: #6b6c72;
+  --text-inverse: #ffffff;
+
+  /* Backgrounds */
+  --bg-white: #ffffff;
+  --bg-page: #f0f4f6;
+  --bg-hover: #e2e9ed;
+
+  /* Borders & Dividers */
+  --border: #d4d7dc;
+  --divider: #d5dee3;
+
+  /* Semantic */
+  --primary: #0066cc;
+  --primary-light: #e6f0ff;
+  --success: #00b797;
+  --danger: #db334d;
+  --warning: #f5a623;
+
+  /* Badge */
+  --badge-new: #e91e8c;
+
+  /* Spacing */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+
+  /* Author colors */
+  --author-david: #3b82f6;
+  --author-jason: #10b981;
+  --author-sarah: #8b5cf6;
+  --author-admin: #9ca3af;
+  --author-you: #f59e0b;
+
+  /* Font - Avenir Next first for Intuit brand */
+  --font: 'Avenir Next', 'Avenir', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-base: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+}
+
+html, body, #root { height: 100%; width: 100%; overflow: hidden; }
+
+body {
+  font-family: var(--font);
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  background: var(--bg-page);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button { font-family: inherit; cursor: pointer; border: none; background: none; padding: 0; }
+input, textarea, select { font-family: inherit; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #aaa; }
