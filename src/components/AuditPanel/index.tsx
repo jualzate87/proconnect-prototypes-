@@ -52,39 +52,40 @@ export default function AuditPanel({ onClose }: AuditPanelProps) {
       {/* Header */}
       <div className="audit-panel-header">
         <h2 className="audit-panel-title">Activity log</h2>
+        <button className="audit-close-btn" onClick={onClose} title="Close panel">
+          <svg viewBox="0 0 16 16" fill="none" width="14" height="14">
+            <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+          </svg>
+        </button>
+      </div>
 
-        <div className="audit-panel-header-actions">
-          {/* Download CSV */}
+      {/* Export toolbar — below header */}
+      <div className="audit-export-bar">
+        <span className="audit-export-label">{versions.length} entries</span>
+        <div className="audit-export-actions">
           <button
-            className="audit-icon-btn"
+            className="audit-export-btn"
             onClick={() => exportCSV(versions)}
             title="Download as CSV"
           >
-            <svg viewBox="0 0 16 16" fill="none" width="15" height="15">
+            <svg viewBox="0 0 16 16" fill="none" width="14" height="14">
               <path d="M8 2v8M5 7l3 3 3-3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
               <path d="M3 12h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
             </svg>
+            Export CSV
           </button>
-
-          {/* Print */}
           <button
-            className="audit-icon-btn"
+            className="audit-export-btn"
             onClick={() => window.print()}
             title="Print activity log"
           >
-            <svg viewBox="0 0 16 16" fill="none" width="15" height="15">
+            <svg viewBox="0 0 16 16" fill="none" width="14" height="14">
               <rect x="3" y="1.5" width="10" height="7" rx="1" stroke="currentColor" strokeWidth="1.4"/>
               <path d="M3 5.5H1.5A1 1 0 00.5 6.5v5a1 1 0 001 1H3M13 5.5h1.5a1 1 0 011 1v5a1 1 0 01-1 1H13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
               <rect x="3" y="9.5" width="10" height="5" rx="1" stroke="currentColor" strokeWidth="1.4"/>
               <path d="M5.5 11.5h5M5.5 13h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
             </svg>
-          </button>
-
-          {/* Close */}
-          <button className="audit-close-btn" onClick={onClose} title="Close panel">
-            <svg viewBox="0 0 16 16" fill="none" width="14" height="14">
-              <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-            </svg>
+            Print
           </button>
         </div>
       </div>

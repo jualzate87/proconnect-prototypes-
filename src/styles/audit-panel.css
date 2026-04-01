@@ -35,25 +35,48 @@
   text-align: center;
 }
 
-.audit-panel-header-actions {
+/* ─── Export toolbar — sits below the header ─── */
+.audit-export-bar {
   display: flex;
   align-items: center;
-  gap: 2px;
+  justify-content: space-between;
+  padding: 6px 16px;
+  border-bottom: 1px solid var(--divider);
+  background: var(--bg-page);
   flex-shrink: 0;
 }
 
-.audit-icon-btn {
-  width: 28px;
-  height: 28px;
+.audit-export-label {
+  font-size: var(--font-size-sm);
+  color: var(--text-tertiary);
+}
+
+.audit-export-actions {
   display: flex;
   align-items: center;
-  justify-content: center;
-  color: var(--text-tertiary);
-  border-radius: var(--radius-sm);
-  transition: all 0.15s;
-  flex-shrink: 0;
+  gap: 6px;
 }
-.audit-icon-btn:hover { background: var(--bg-page); color: var(--text-primary); }
+
+.audit-export-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.audit-export-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
 
 .audit-close-btn {
   width: 28px;
