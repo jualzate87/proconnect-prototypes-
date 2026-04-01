@@ -7,7 +7,6 @@ import RightRail from './RightRail'
 import InputScreens from './InputScreens'
 import AuditPanel from './AuditPanel'
 import PreviewBanner from './PreviewBanner'
-import DuplicateModal from './DuplicateModal'
 import Toast from './Toast'
 import './AppLayout.css'
 
@@ -48,7 +47,6 @@ export default function AppLayout() {
         </div>
       </div>
 
-      <DuplicateModal />
       <Toast />
     </div>
   )
