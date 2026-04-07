@@ -18,6 +18,93 @@ export function getChangeTypeColor(changeType: string): string {
   return CHANGE_TYPE_COLORS[changeType] || '#6b7280'
 }
 
+// ── Human-readable field labels for diff view ─────────────────────────────────
+export const FIELD_LABELS: Record<string, string> = {
+  // income — Bing Equipment
+  'income.employerId':       'Employer ID',
+  'income.employerName':     'Employer name',
+  'income.streetAddress':    'Street address',
+  'income.city':             'City',
+  'income.state':            'State',
+  'income.zip':              'ZIP code',
+  'income.w2Wages':          'W-2 Wages',
+  'income.fedTaxWithheld':   'Federal tax withheld',
+  'income.ssWages':          'SS wages',
+  'income.ssTaxWithheld':    'SS tax withheld',
+  'income.medicareWages':    'Medicare wages',
+  'income.medicareTax':      'Medicare tax',
+  'income.seIncome':         'SE income',
+  // income — Tech Circle
+  'income.tcEmployerId':     'TC Employer ID',
+  'income.tcEmployerName':   'TC Employer name',
+  'income.tcStreetAddress':  'TC Street address',
+  'income.tcCity':           'TC City',
+  'income.tcState':          'TC State',
+  'income.tcZip':            'TC ZIP code',
+  'income.tcW2Wages':        'TC W-2 Wages',
+  'income.tcFedTaxWithheld': 'TC Federal tax withheld',
+  'income.tcSsWages':        'TC SS wages',
+  'income.tcSsTaxWithheld':  'TC SS tax withheld',
+  'income.tcMedicareWages':  'TC Medicare wages',
+  'income.tcMedicareTax':    'TC Medicare tax',
+  // interest
+  'interest.p1Name':             'Payer 1 name',
+  'interest.p1EIN':              'Payer 1 EIN',
+  'interest.p1Interest':         'Payer 1 interest',
+  'interest.p1FedTax':           'Payer 1 fed tax',
+  'interest.p2Name':             'Payer 2 name',
+  'interest.p2EIN':              'Payer 2 EIN',
+  'interest.p2Interest':         'Payer 2 interest',
+  'interest.p2FedTax':           'Payer 2 fed tax',
+  'interest.dividendIncome':     'Dividend income',
+  'interest.qualifiedDividends': 'Qualified dividends',
+  'interest.interestIncome':     'Total interest income',
+  'interest.sources':            'Sources',
+  // investment
+  'investment.capitalGains':   'Capital gains',
+  'investment.shortTermGains': 'Short-term gains',
+  'investment.stockSales':     'Stock sales',
+  // other
+  'other.propertyAddress': 'Property address',
+  'other.propertyCity':    'Property city',
+  'other.propertyState':   'Property state',
+  'other.daysRented':      'Days rented',
+  'other.rentalIncome':    'Rental income',
+  'other.rentalExpenses':  'Rental expenses',
+  'other.k1PartnerName':   'K-1 partner name',
+  'other.passiveIncome':   'Passive income',
+}
+
+/** Human-readable label for a dotted field path, e.g. 'income.w2Wages' → 'W-2 Wages' */
+export function fieldLabel(field: string): string {
+  if (FIELD_LABELS[field]) return FIELD_LABELS[field]
+  const key = field.split('.')[1] ?? field
+  return key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())
+}
+
+const CURRENCY_FIELDS = new Set([
+  'w2Wages','fedTaxWithheld','ssWages','ssTaxWithheld','medicareWages','medicareTax','seIncome',
+  'tcW2Wages','tcFedTaxWithheld','tcSsWages','tcSsTaxWithheld','tcMedicareWages','tcMedicareTax',
+  'p1Interest','p1FedTax','p2Interest','p2FedTax',
+  'dividendIncome','qualifiedDividends','interestIncome',
+  'capitalGains','shortTermGains',
+  'rentalIncome','rentalExpenses','passiveIncome','daysRented',
+])
+
+/** Format a field value for display in the diff table */
+export function formatFieldValue(field: string, value: any): string {
+  if (value === '' || value === null || value === undefined) return '—'
+  if (typeof value === 'number') {
+    if (value === 0) return '—'
+    const key = field.split('.')[1] ?? ''
+    if (CURRENCY_FIELDS.has(key)) {
+      return value.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
+    }
+    return value.toLocaleString()
+  }
+  return String(value)
+}
+
 // ── Screen name mapping — matches left nav labels exactly ─────────────────────
 export const SECTION_DISPLAY: Record<string, string> = {
   income:       'Wages & Salaries',

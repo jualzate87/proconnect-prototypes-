@@ -48,6 +48,7 @@ export interface AppActions {
   setDuplicateOpen: (open: boolean) => void
   previewVersion: (versionId: string | null) => void
   revertToVersion: (versionId: string) => void
+  undoChange: (versionId: string) => void
   setRenameVersionId: (versionId: string | null) => void
   setFilters: (filters: FilterState) => void
   clearFilters: () => void
@@ -319,6 +320,55 @@ export function createAppStore(_initialState: AppState) {
           previewVersionId: null,  // exit preview after restore
           highlightedFields: [],
           highlightColor: '',
+        }
+      },
+
+      undoChange: (state: AppState, versionId: string): AppState => {
+        const version = state.auditLog.versions.find(v => v.id === versionId)
+        if (!version?.changes?.length) return state
+
+        // Surgically patch current taxData — only the fields from this version's changes
+        let newData: TaxReturnData = { ...state.taxData }
+        for (const change of version.changes) {
+          const [section, field] = change.field.split('.')
+          const sectionKey = section as keyof TaxReturnData
+          newData = {
+            ...newData,
+            [sectionKey]: {
+              ...(newData[sectionKey] as Record<string, unknown>),
+              [field]: change.oldValue,
+            },
+          }
+        }
+
+        const undoEntry: Version = {
+          id: generateVersionId(),
+          timestamp: Date.now(),
+          author: 'You',
+          label: `Undid: ${version.label}`,
+          changeType: 'revert',
+          description: `Undid changes from "${version.label}"`,
+          dataSnapshot: newData,
+          changes: version.changes.map(c => ({ field: c.field, oldValue: c.newValue, newValue: c.oldValue })),
+          relatedFields: version.relatedFields,
+        }
+
+        const newAuditLog = {
+          ...state.auditLog,
+          versions: [...state.auditLog.versions, undoEntry],
+          currentVersionId: undoEntry.id,
+          lastModified: Date.now(),
+          schemaVersion: SCHEMA_VER,
+        }
+
+        saveTaxDataToStorage(newData)
+        saveAuditLogToStorage(newAuditLog)
+
+        return {
+          ...state,
+          taxData: newData,
+          auditLog: newAuditLog,
+          toast: `Undid "${version.label}"`,
         }
       },
 

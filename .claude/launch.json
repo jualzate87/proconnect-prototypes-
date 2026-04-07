@@ -3,8 +3,14 @@
   "configurations": [
     {
       "name": "proconnect-audit",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeExecutable": "/Users/jalzate/.nvm/versions/node/v24.14.1/bin/node",
+      "runtimeArgs": ["node_modules/vite/bin/vite.js", "--port", "3001"],
+      "port": 3001
+    },
+    {
+      "name": "data-viz",
+      "runtimeExecutable": "/Users/jalzate/.nvm/versions/node/v24.14.1/bin/node",
+      "runtimeArgs": ["node_modules/vite/bin/vite.js"],
       "port": 3000
     }
   ]

@@ -45,6 +45,9 @@ function App() {
     revertToVersion: (versionId) => {
       setState(prev => store.actions.revertToVersion(prev, versionId))
     },
+    undoChange: (versionId) => {
+      setState(prev => store.actions.undoChange(prev, versionId))
+    },
     setRenameVersionId: (versionId) => {
       setState(prev => store.actions.setRenameVersionId(prev, versionId))
     },

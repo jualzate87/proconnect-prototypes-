@@ -444,6 +444,7 @@
   flex-wrap: wrap;
   gap: 5px;
   margin-top: 5px;
+  flex: 1;
 }
 
 .entry-section-chip {
@@ -486,6 +487,122 @@
   background: var(--primary-light);
   padding: 1px 7px;
   border-radius: 8px;
+}
+
+/* ─── Entry footer row (section chips + View changes toggle) ─── */
+.entry-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.entry-diff-toggle {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.entry-diff-toggle:hover { color: var(--action-primary); }
+
+/* ─── Inline diff panel ─── */
+.entry-diff {
+  margin-top: 10px;
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--bg-white);
+}
+
+.entry-diff-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.entry-diff-table thead tr {
+  background: #f7f8fa;
+  border-bottom: 1px solid var(--divider);
+}
+
+.entry-diff-table th {
+  padding: 5px 8px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.entry-diff-table tbody tr {
+  border-bottom: 1px solid var(--divider);
+}
+.entry-diff-table tbody tr:last-child { border-bottom: none; }
+.entry-diff-table tbody tr:hover { background: #fafbfc; }
+
+.entry-diff-table td {
+  padding: 5px 8px;
+  vertical-align: middle;
+}
+
+.entry-diff-field {
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.entry-diff-before {
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.entry-diff-after {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.entry-diff-current {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.entry-diff-conflict {
+  font-size: 7px;
+  color: #d97706;
+  margin-right: 3px;
+  vertical-align: middle;
+}
+
+.entry-diff-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 7px 10px;
+  border-top: 1px solid var(--divider);
+  background: #fafbfc;
+}
+
+.entry-undo-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: #b45309;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.entry-undo-btn:hover {
+  background: #fde68a;
+  border-color: #f59e0b;
 }
 
 /* ─── Action menu ─── */

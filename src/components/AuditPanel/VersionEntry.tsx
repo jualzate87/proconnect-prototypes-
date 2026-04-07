@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Version } from '../../types'
 import { useAppContext } from '../../index'
-import { getChangeTypeColor, SECTION_DISPLAY } from '../../lib/mock-data'
+import { getChangeTypeColor, SECTION_DISPLAY, fieldLabel, formatFieldValue } from '../../lib/mock-data'
 
 interface VersionEntryProps {
   version: Version
@@ -44,9 +44,11 @@ function formatTime(timestamp: number): string {
 export default function VersionEntry({ version }: VersionEntryProps) {
   const {
     auditLog,
+    taxData,
     previewVersionId,
     previewVersion,
     revertToVersion,
+    undoChange,
     setHighlight,
     clearHighlight,
   } = useAppContext()
@@ -55,6 +57,7 @@ export default function VersionEntry({ version }: VersionEntryProps) {
   const isPreviewing = previewVersionId === version.id
 
   const [showMenu, setShowMenu] = useState(false)
+  const [showDiff, setShowDiff] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
   // Close menu on outside click
@@ -71,7 +74,12 @@ export default function VersionEntry({ version }: VersionEntryProps) {
   const typeLabel = CHANGE_TYPE_LABELS[version.changeType] || version.changeType
 
   const hasRelated = (version.relatedFields?.length ?? 0) > 0
+  const hasChanges = (version.changes?.length ?? 0) > 0
   const summary    = hasRelated ? getSectionSummary(version.relatedFields!) : []
+
+  const canUndo = hasChanges &&
+    version.changeType !== 'revert' &&
+    version.changeType !== 'copy'
 
   // ── Highlight on hover ────────────────────────────────────────────────────
   const handleMouseEnter = () => {
@@ -87,12 +95,25 @@ export default function VersionEntry({ version }: VersionEntryProps) {
   const handlePreview = () => { previewVersion(version.id); setShowMenu(false) }
   const handleRevert  = () => { revertToVersion(version.id); setShowMenu(false) }
 
+  const handleUndo = () => {
+    undoChange(version.id)
+    setShowDiff(false)
+  }
+
+  // ── Diff helpers ──────────────────────────────────────────────────────────
+  const getCurrentValue = (field: string): unknown => {
+    const [section, key] = field.split('.')
+    const sectionData = taxData[section as keyof typeof taxData] as Record<string, unknown> | undefined
+    return sectionData?.[key]
+  }
+
   return (
     <div
       className={[
         'version-entry',
         isCurrent    ? 'version-entry--current'   : '',
         isPreviewing ? 'version-entry--previewing' : '',
+        showDiff     ? 'version-entry--diff-open'  : '',
       ].filter(Boolean).join(' ')}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -157,18 +178,80 @@ export default function VersionEntry({ version }: VersionEntryProps) {
           <span className="entry-time">{formatTime(version.timestamp)}</span>
         </div>
 
-        {/* Section chips */}
-        {summary.length > 0 && (
-          <div className="entry-section-summary">
-            {summary.map(s => (
-              <span key={s.name} className="entry-section-chip">
-                {s.name} · {s.count} {s.count === 1 ? 'field' : 'fields'}
-              </span>
-            ))}
-          </div>
-        )}
+        {/* Section chips + View changes toggle */}
+        <div className="entry-footer-row">
+          {summary.length > 0 && (
+            <div className="entry-section-summary">
+              {summary.map(s => (
+                <span key={s.name} className="entry-section-chip">
+                  {s.name} · {s.count} {s.count === 1 ? 'field' : 'fields'}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {hasChanges && (
+            <button
+              className="entry-diff-toggle"
+              onClick={() => setShowDiff(v => !v)}
+            >
+              {showDiff ? 'Hide changes ▲' : 'View changes ▾'}
+            </button>
+          )}
+        </div>
 
         {isCurrent && <div className="entry-current-badge">Current</div>}
+
+        {/* ── Inline diff panel ── */}
+        {showDiff && hasChanges && (
+          <div className="entry-diff">
+            <table className="entry-diff-table">
+              <thead>
+                <tr>
+                  <th>Field</th>
+                  <th>Before</th>
+                  <th style={{ color: typeColor }}>After this change</th>
+                  <th>Current</th>
+                </tr>
+              </thead>
+              <tbody>
+                {version.changes!.map((change, i) => {
+                  const currentVal = getCurrentValue(change.field)
+                  const currentDiffers = currentVal !== change.newValue
+                  return (
+                    <tr key={i}>
+                      <td className="entry-diff-field">{fieldLabel(change.field)}</td>
+                      <td className="entry-diff-before">
+                        {formatFieldValue(change.field, change.oldValue)}
+                      </td>
+                      <td className="entry-diff-after" style={{ color: typeColor }}>
+                        {formatFieldValue(change.field, change.newValue)}
+                      </td>
+                      <td className="entry-diff-current">
+                        {currentDiffers && (
+                          <span className="entry-diff-conflict" title="A later change also modified this field">●</span>
+                        )}
+                        {formatFieldValue(change.field, currentVal)}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+
+            {canUndo && (
+              <div className="entry-diff-actions">
+                <button className="entry-undo-btn" onClick={handleUndo}>
+                  <svg viewBox="0 0 14 14" fill="none" width="12" height="12">
+                    <path d="M3 7a4 4 0 104-4H4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                    <path d="M4 5L2 7l2 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Undo this change
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
