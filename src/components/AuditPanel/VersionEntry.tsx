@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Version } from '../../types'
 import { useAppContext } from '../../index'
 import { getChangeTypeColor, SECTION_DISPLAY, fieldLabel, formatFieldValue } from '../../lib/mock-data'
@@ -56,8 +57,8 @@ export default function VersionEntry({ version }: VersionEntryProps) {
   const isCurrent    = version.id === auditLog.currentVersionId
   const isPreviewing = previewVersionId === version.id
 
-  const [showMenu, setShowMenu] = useState(false)
-  const [showDiff, setShowDiff] = useState(false)
+  const [showMenu, setShowMenu]   = useState(false)
+  const [showDiff, setShowDiff]   = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
   // Close menu on outside click
@@ -69,6 +70,14 @@ export default function VersionEntry({ version }: VersionEntryProps) {
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [showMenu])
+
+  // Close diff modal on Escape
+  useEffect(() => {
+    if (!showDiff) return
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowDiff(false) }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [showDiff])
 
   const typeColor = getChangeTypeColor(version.changeType)
   const typeLabel = CHANGE_TYPE_LABELS[version.changeType] || version.changeType
@@ -94,7 +103,9 @@ export default function VersionEntry({ version }: VersionEntryProps) {
   // ── Action menu handlers ──────────────────────────────────────────────────
   const handlePreview = () => { previewVersion(version.id); setShowMenu(false) }
   const handleRevert  = () => { revertToVersion(version.id); setShowMenu(false) }
+  const handleMenuUndo = () => { undoChange(version.id); setShowMenu(false) }
 
+  // ── Diff modal handlers ───────────────────────────────────────────────────
   const handleUndo = () => {
     undoChange(version.id)
     setShowDiff(false)
@@ -107,166 +118,201 @@ export default function VersionEntry({ version }: VersionEntryProps) {
     return sectionData?.[key]
   }
 
-  return (
-    <div
-      className={[
-        'version-entry',
-        isCurrent    ? 'version-entry--current'   : '',
-        isPreviewing ? 'version-entry--previewing' : '',
-        showDiff     ? 'version-entry--diff-open'  : '',
-      ].filter(Boolean).join(' ')}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      {/* Change-type color dot */}
-      <div className="entry-dot" style={{ background: typeColor }} />
-
-      <div className="entry-body">
-        {/* Description row */}
-        <div className="entry-top">
-          <p className="entry-description">{version.description}</p>
-
-          <div className="entry-menu-wrap" ref={menuRef}>
-            <button
-              className="version-menu-btn"
-              onClick={() => setShowMenu(!showMenu)}
-              title="Actions"
-            >
-              <svg viewBox="0 0 16 16" fill="none" width="14" height="14">
-                <circle cx="8" cy="3.5"  r="1.2" fill="currentColor"/>
-                <circle cx="8" cy="8"    r="1.2" fill="currentColor"/>
-                <circle cx="8" cy="12.5" r="1.2" fill="currentColor"/>
-              </svg>
-            </button>
-            {showMenu && (
-              <div className="action-menu">
-                <button className="action-menu-item" onClick={handlePreview}>
-                  <svg viewBox="0 0 14 14" fill="none" width="13" height="13">
-                    <ellipse cx="7" cy="7" rx="5.5" ry="3.5" stroke="currentColor" strokeWidth="1.3"/>
-                    <circle cx="7" cy="7" r="1.5" fill="currentColor"/>
-                  </svg>
-                  Preview this version
-                </button>
-                {!isCurrent && (
-                  <button className="action-menu-item" onClick={handleRevert}>
-                    <svg viewBox="0 0 14 14" fill="none" width="13" height="13">
-                      <path d="M3 7a4 4 0 104-4H4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-                      <path d="M4 5L2 7l2 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    Restore this version
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Badge + author + time */}
-        <div className="entry-meta">
-          <span
-            className="entry-type-badge"
-            style={{
-              background:  typeColor + '18',
-              color:       typeColor,
-              borderColor: typeColor + '40',
-            }}
-          >
-            {typeLabel}{version.apiSource ? ` · ${version.apiSource}` : ''}
-          </span>
-          <span className="entry-author">{version.author}</span>
-          <span className="entry-sep">·</span>
-          <span className="entry-time">{formatTime(version.timestamp)}</span>
-        </div>
-
-        {/* Section chips + View changes toggle */}
-        <div className="entry-footer-row">
-          {summary.length > 0 && (
-            <div className="entry-section-summary">
-              {summary.map(s => (
-                <span key={s.name} className="entry-section-chip">
-                  {s.name} · {s.count} {s.count === 1 ? 'field' : 'fields'}
+  // ── Diff modal ────────────────────────────────────────────────────────────
+  const diffModal = showDiff && hasChanges && createPortal(
+    <div className="modal-overlay" onClick={() => setShowDiff(false)}>
+      <div className="diff-modal" onClick={e => e.stopPropagation()}>
+        {/* Modal header */}
+        <div className="diff-modal-header">
+          <div className="diff-modal-title-wrap">
+            <div className="entry-dot" style={{ background: typeColor, marginTop: 2 }} />
+            <div>
+              <h2 className="diff-modal-title">{version.description}</h2>
+              <div className="diff-modal-meta">
+                <span
+                  className="entry-type-badge"
+                  style={{
+                    background:  typeColor + '18',
+                    color:       typeColor,
+                    borderColor: typeColor + '40',
+                  }}
+                >
+                  {typeLabel}{version.apiSource ? ` · ${version.apiSource}` : ''}
                 </span>
-              ))}
+                <span className="entry-author">{version.author}</span>
+                <span className="entry-sep">·</span>
+                <span className="entry-time">{formatTime(version.timestamp)}</span>
+              </div>
             </div>
-          )}
+          </div>
+          <button className="diff-modal-close" onClick={() => setShowDiff(false)} title="Close">
+            <svg viewBox="0 0 14 14" fill="none" width="14" height="14">
+              <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+            </svg>
+          </button>
+        </div>
 
-          {hasChanges && (
-            <button
-              className="entry-diff-toggle"
-              onClick={() => setShowDiff(v => !v)}
-            >
-              {showDiff ? (
-                <>
-                  Hide changes
-                  <svg viewBox="0 0 12 12" fill="none" width="10" height="10" style={{ marginLeft: 3 }}>
-                    <path d="M2 8l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </>
-              ) : (
-                <>
-                  View changes
-                  <svg viewBox="0 0 12 12" fill="none" width="10" height="10" style={{ marginLeft: 3 }}>
-                    <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </>
-              )}
+        {/* Table */}
+        <div className="diff-modal-body">
+          <table className="diff-modal-table">
+            <thead>
+              <tr>
+                <th>Field</th>
+                <th>Before</th>
+                <th>After this change</th>
+                <th>Current</th>
+              </tr>
+            </thead>
+            <tbody>
+              {version.changes!.map((change, i) => {
+                const currentVal = getCurrentValue(change.field)
+                const currentDiffers = currentVal !== change.newValue
+                return (
+                  <tr key={i}>
+                    <td className="diff-modal-field">{fieldLabel(change.field)}</td>
+                    <td className="diff-modal-before">{formatFieldValue(change.field, change.oldValue)}</td>
+                    <td className="diff-modal-after">{formatFieldValue(change.field, change.newValue)}</td>
+                    <td className="diff-modal-current">
+                      {currentDiffers && (
+                        <span className="entry-diff-conflict" title="A later change also modified this field">●</span>
+                      )}
+                      {formatFieldValue(change.field, currentVal)}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Footer */}
+        <div className="diff-modal-footer">
+          <button className="modal-btn" onClick={() => setShowDiff(false)}>Close</button>
+          {canUndo && (
+            <button className="modal-btn primary" onClick={handleUndo}>
+              <svg viewBox="0 0 14 14" fill="none" width="12" height="12" style={{ marginRight: 5 }}>
+                <path d="M3 7a4 4 0 104-4H4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                <path d="M4 5L2 7l2 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Undo this change
             </button>
           )}
         </div>
+      </div>
+    </div>,
+    document.body
+  )
 
-        {isCurrent && <div className="entry-current-badge">Current</div>}
+  return (
+    <>
+      <div
+        className={[
+          'version-entry',
+          isCurrent    ? 'version-entry--current'   : '',
+          isPreviewing ? 'version-entry--previewing' : '',
+        ].filter(Boolean).join(' ')}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        {/* Change-type color dot */}
+        <div className="entry-dot" style={{ background: typeColor }} />
 
-        {/* ── Inline diff panel ── */}
-        {showDiff && hasChanges && (
-          <div className="entry-diff">
-            <table className="entry-diff-table">
-              <thead>
-                <tr>
-                  <th>Field</th>
-                  <th>Before</th>
-                  <th>After this change</th>
-                  <th>Current</th>
-                </tr>
-              </thead>
-              <tbody>
-                {version.changes!.map((change, i) => {
-                  const currentVal = getCurrentValue(change.field)
-                  const currentDiffers = currentVal !== change.newValue
-                  return (
-                    <tr key={i}>
-                      <td className="entry-diff-field">{fieldLabel(change.field)}</td>
-                      <td className="entry-diff-before">
-                        {formatFieldValue(change.field, change.oldValue)}
-                      </td>
-                      <td className="entry-diff-after">
-                        {formatFieldValue(change.field, change.newValue)}
-                      </td>
-                      <td className="entry-diff-current">
-                        {currentDiffers && (
-                          <span className="entry-diff-conflict" title="A later change also modified this field">●</span>
-                        )}
-                        {formatFieldValue(change.field, currentVal)}
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+        <div className="entry-body">
+          {/* Description row */}
+          <div className="entry-top">
+            <p className="entry-description">{version.description}</p>
 
-            {canUndo && (
-              <div className="entry-diff-actions">
-                <button className="entry-undo-btn" onClick={handleUndo}>
-                  <svg viewBox="0 0 14 14" fill="none" width="12" height="12">
-                    <path d="M3 7a4 4 0 104-4H4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-                    <path d="M4 5L2 7l2 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  Undo this change
-                </button>
+            <div className="entry-menu-wrap" ref={menuRef}>
+              <button
+                className="version-menu-btn"
+                onClick={() => setShowMenu(!showMenu)}
+                title="Actions"
+              >
+                <svg viewBox="0 0 16 16" fill="none" width="14" height="14">
+                  <circle cx="8" cy="3.5"  r="1.2" fill="currentColor"/>
+                  <circle cx="8" cy="8"    r="1.2" fill="currentColor"/>
+                  <circle cx="8" cy="12.5" r="1.2" fill="currentColor"/>
+                </svg>
+              </button>
+              {showMenu && (
+                <div className="action-menu">
+                  <button className="action-menu-item" onClick={handlePreview}>
+                    <svg viewBox="0 0 14 14" fill="none" width="13" height="13">
+                      <ellipse cx="7" cy="7" rx="5.5" ry="3.5" stroke="currentColor" strokeWidth="1.3"/>
+                      <circle cx="7" cy="7" r="1.5" fill="currentColor"/>
+                    </svg>
+                    Preview this version
+                  </button>
+                  {canUndo && (
+                    <button className="action-menu-item" onClick={handleMenuUndo}>
+                      <svg viewBox="0 0 14 14" fill="none" width="13" height="13">
+                        <path d="M3 7a4 4 0 104-4H4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                        <path d="M4 5L2 7l2 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      Undo this change
+                    </button>
+                  )}
+                  {isPreviewing && (
+                    <button className="action-menu-item" onClick={handleRevert}>
+                      <svg viewBox="0 0 14 14" fill="none" width="13" height="13">
+                        <path d="M3 7a4 4 0 104-4H4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                        <path d="M4 5L2 7l2 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      Restore this version
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Badge + author + time */}
+          <div className="entry-meta">
+            <span
+              className="entry-type-badge"
+              style={{
+                background:  typeColor + '18',
+                color:       typeColor,
+                borderColor: typeColor + '40',
+              }}
+            >
+              {typeLabel}{version.apiSource ? ` · ${version.apiSource}` : ''}
+            </span>
+            <span className="entry-author">{version.author}</span>
+            <span className="entry-sep">·</span>
+            <span className="entry-time">{formatTime(version.timestamp)}</span>
+          </div>
+
+          {/* Section chips + View changes toggle */}
+          <div className="entry-footer-row">
+            {summary.length > 0 && (
+              <div className="entry-section-summary">
+                {summary.map(s => (
+                  <span key={s.name} className="entry-section-chip">
+                    {s.name} · {s.count} {s.count === 1 ? 'field' : 'fields'}
+                  </span>
+                ))}
               </div>
             )}
+
+            {hasChanges && (
+              <button
+                className="entry-diff-toggle"
+                onClick={() => setShowDiff(true)}
+              >
+                View changes
+                <svg viewBox="0 0 12 12" fill="none" width="10" height="10" style={{ marginLeft: 3 }}>
+                  <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            )}
           </div>
-        )}
+
+          {isCurrent && <div className="entry-current-badge">Current</div>}
+        </div>
       </div>
-    </div>
+
+      {diffModal}
+    </>
   )
 }
