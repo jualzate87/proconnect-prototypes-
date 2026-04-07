@@ -326,6 +326,14 @@ export default function VersionEntry({ version }: VersionEntryProps) {
                     </svg>
                     Preview this version
                   </button>
+                  {hasChanges && (
+                    <button className="action-menu-item" onClick={() => { setShowDiff(true); setShowMenu(false) }}>
+                      <svg viewBox="0 0 14 14" fill="none" width="13" height="13">
+                        <path d="M2 4h10M2 7h7M2 10h5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                      </svg>
+                      View changes
+                    </button>
+                  )}
                   {canUndo && (
                     <button className="action-menu-item" onClick={handleMenuUndo}>
                       <svg viewBox="0 0 14 14" fill="none" width="13" height="13">
@@ -366,30 +374,16 @@ export default function VersionEntry({ version }: VersionEntryProps) {
             <span className="entry-time">{formatTime(version.timestamp)}</span>
           </div>
 
-          {/* Section chips + View changes toggle */}
-          <div className="entry-footer-row">
-            {summary.length > 0 && (
-              <div className="entry-section-summary">
-                {summary.map(s => (
-                  <span key={s.name} className="entry-section-chip">
-                    {s.name} · {s.count} {s.count === 1 ? 'field' : 'fields'}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {hasChanges && (
-              <button
-                className="entry-diff-toggle"
-                onClick={() => setShowDiff(true)}
-              >
-                View changes
-                <svg viewBox="0 0 12 12" fill="none" width="10" height="10" style={{ marginLeft: 3 }}>
-                  <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-            )}
-          </div>
+          {/* Section chips */}
+          {summary.length > 0 && (
+            <div className="entry-section-summary">
+              {summary.map(s => (
+                <span key={s.name} className="entry-section-chip">
+                  {s.name} · {s.count} {s.count === 1 ? 'field' : 'fields'}
+                </span>
+              ))}
+            </div>
+          )}
 
           {isCurrent && <div className="entry-current-badge">Current</div>}
         </div>
