@@ -499,17 +499,21 @@
 }
 
 .entry-diff-toggle {
+  display: inline-flex;
+  align-items: center;
   font-size: var(--font-size-sm);
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--action-primary);
   background: none;
   border: none;
   padding: 0;
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
-.entry-diff-toggle:hover { color: var(--action-primary); }
+.entry-diff-toggle:hover { color: var(--action-primary-hover); }
 
 /* ─── Inline diff panel ─── */
 .entry-diff {
@@ -563,6 +567,7 @@
 
 .entry-diff-after {
   font-weight: 600;
+  color: var(--text-primary);
   font-variant-numeric: tabular-nums;
 }
 
@@ -593,16 +598,15 @@
   padding: 4px 10px;
   font-size: var(--font-size-sm);
   font-weight: 500;
-  color: #b45309;
-  background: #fef3c7;
-  border: 1px solid #fcd34d;
+  color: var(--action-primary);
+  background: var(--bg-white);
+  border: 1px solid var(--action-primary);
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all 0.15s;
 }
 .entry-undo-btn:hover {
-  background: #fde68a;
-  border-color: #f59e0b;
+  background: var(--primary-light);
 }
 
 /* ─── Action menu ─── */

@@ -195,7 +195,21 @@ export default function VersionEntry({ version }: VersionEntryProps) {
               className="entry-diff-toggle"
               onClick={() => setShowDiff(v => !v)}
             >
-              {showDiff ? 'Hide changes ▲' : 'View changes ▾'}
+              {showDiff ? (
+                <>
+                  Hide changes
+                  <svg viewBox="0 0 12 12" fill="none" width="10" height="10" style={{ marginLeft: 3 }}>
+                    <path d="M2 8l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </>
+              ) : (
+                <>
+                  View changes
+                  <svg viewBox="0 0 12 12" fill="none" width="10" height="10" style={{ marginLeft: 3 }}>
+                    <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </>
+              )}
             </button>
           )}
         </div>
@@ -210,7 +224,7 @@ export default function VersionEntry({ version }: VersionEntryProps) {
                 <tr>
                   <th>Field</th>
                   <th>Before</th>
-                  <th style={{ color: typeColor }}>After this change</th>
+                  <th>After this change</th>
                   <th>Current</th>
                 </tr>
               </thead>
@@ -224,7 +238,7 @@ export default function VersionEntry({ version }: VersionEntryProps) {
                       <td className="entry-diff-before">
                         {formatFieldValue(change.field, change.oldValue)}
                       </td>
-                      <td className="entry-diff-after" style={{ color: typeColor }}>
+                      <td className="entry-diff-after">
                         {formatFieldValue(change.field, change.newValue)}
                       </td>
                       <td className="entry-diff-current">
