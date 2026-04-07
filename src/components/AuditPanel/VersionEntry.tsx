@@ -57,8 +57,9 @@ export default function VersionEntry({ version }: VersionEntryProps) {
   const isCurrent    = version.id === auditLog.currentVersionId
   const isPreviewing = previewVersionId === version.id
 
-  const [showMenu, setShowMenu]   = useState(false)
-  const [showDiff, setShowDiff]   = useState(false)
+  const [showMenu, setShowMenu]             = useState(false)
+  const [showDiff, setShowDiff]             = useState(false)
+  const [showRestoreConfirm, setShowRestoreConfirm] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
   // Close menu on outside click
@@ -71,13 +72,15 @@ export default function VersionEntry({ version }: VersionEntryProps) {
     return () => document.removeEventListener('mousedown', handler)
   }, [showMenu])
 
-  // Close diff modal on Escape
+  // Close modals on Escape
   useEffect(() => {
-    if (!showDiff) return
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowDiff(false) }
+    if (!showDiff && !showRestoreConfirm) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { setShowDiff(false); setShowRestoreConfirm(false) }
+    }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
-  }, [showDiff])
+  }, [showDiff, showRestoreConfirm])
 
   const typeColor = getChangeTypeColor(version.changeType)
   const typeLabel = CHANGE_TYPE_LABELS[version.changeType] || version.changeType
@@ -102,8 +105,9 @@ export default function VersionEntry({ version }: VersionEntryProps) {
 
   // ── Action menu handlers ──────────────────────────────────────────────────
   const handlePreview = () => { previewVersion(version.id); setShowMenu(false) }
-  const handleRevert  = () => { revertToVersion(version.id); setShowMenu(false) }
+  const handleRevert  = () => { setShowRestoreConfirm(true); setShowMenu(false) }
   const handleMenuUndo = () => { undoChange(version.id); setShowMenu(false) }
+  const handleConfirmRestore = () => { revertToVersion(version.id); setShowRestoreConfirm(false) }
 
   // ── Diff modal handlers ───────────────────────────────────────────────────
   const handleUndo = () => {
@@ -197,6 +201,85 @@ export default function VersionEntry({ version }: VersionEntryProps) {
               Undo this change
             </button>
           )}
+        </div>
+      </div>
+    </div>,
+    document.body
+  )
+
+  // ── Restore confirm modal ─────────────────────────────────────────────────
+  const versionIndex    = auditLog.versions.findIndex(v => v.id === version.id)
+  const versionsAfter   = versionIndex >= 0 ? auditLog.versions.slice(versionIndex + 1) : []
+  const changesAfterCount = versionsAfter.reduce((n, v) => n + (v.changes?.length ?? 0), 0)
+  const recentLabels    = versionsAfter.slice(-3).reverse().map(v => v.description)
+
+  const versionDate = new Date(version.timestamp)
+  const fullDate = versionDate.toLocaleDateString([], {
+    weekday: 'long', month: 'long', day: 'numeric',
+  })
+  const fullTime = versionDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+
+  const restoreConfirmModal = showRestoreConfirm && createPortal(
+    <div className="modal-overlay" onClick={() => setShowRestoreConfirm(false)}>
+      <div className="restore-confirm-modal" onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div className="restore-confirm-header">
+          <div className="restore-confirm-icon">
+            <svg viewBox="0 0 20 20" fill="none" width="20" height="20">
+              <path d="M5 10a5 5 0 105-5H7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+              <path d="M7 7L4.5 10 7 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <h2 className="restore-confirm-title">Restore to this version?</h2>
+        </div>
+
+        {/* Body */}
+        <div className="restore-confirm-body">
+          <p className="restore-confirm-lead">
+            Your return will go back to how it looked on{' '}
+            <strong>{fullDate} at {fullTime}</strong>.
+          </p>
+
+          {versionsAfter.length > 0 && (
+            <div className="restore-confirm-impact">
+              <div className="restore-confirm-impact-title">
+                What will be undone
+              </div>
+              <ul className="restore-confirm-impact-list">
+                {recentLabels.map((label, i) => (
+                  <li key={i}>{label}</li>
+                ))}
+                {versionsAfter.length > 3 && (
+                  <li className="restore-confirm-more">
+                    + {versionsAfter.length - 3} more {versionsAfter.length - 3 === 1 ? 'change' : 'changes'}
+                  </li>
+                )}
+              </ul>
+              {changesAfterCount > 0 && (
+                <p className="restore-confirm-field-count">
+                  {changesAfterCount} field {changesAfterCount === 1 ? 'value' : 'values'} will be overwritten.
+                </p>
+              )}
+            </div>
+          )}
+
+          <p className="restore-confirm-note">
+            The current version will remain in the activity log. You can restore back to it at any time.
+          </p>
+        </div>
+
+        {/* Footer */}
+        <div className="restore-confirm-footer">
+          <button className="modal-btn" onClick={() => setShowRestoreConfirm(false)}>
+            Cancel
+          </button>
+          <button className="modal-btn primary" onClick={handleConfirmRestore}>
+            <svg viewBox="0 0 14 14" fill="none" width="13" height="13" style={{ marginRight: 5 }}>
+              <path d="M3 7a4 4 0 104-4H4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+              <path d="M4 5L2 7l2 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Restore version
+          </button>
         </div>
       </div>
     </div>,
@@ -313,6 +396,7 @@ export default function VersionEntry({ version }: VersionEntryProps) {
       </div>
 
       {diffModal}
+      {restoreConfirmModal}
     </>
   )
 }

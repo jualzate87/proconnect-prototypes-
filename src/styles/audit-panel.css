@@ -738,6 +738,115 @@
   flex-shrink: 0;
 }
 
+/* ─── Restore confirmation modal ─── */
+.restore-confirm-modal {
+  background: var(--bg-white);
+  border-radius: 8px;
+  box-shadow: 0 20px 48px rgba(0,0,0,0.22);
+  width: min(460px, 94vw);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.restore-confirm-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 20px 0;
+}
+
+.restore-confirm-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  color: var(--action-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.restore-confirm-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.restore-confirm-body {
+  padding: 16px 20px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.restore-confirm-lead {
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.restore-confirm-impact {
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.restore-confirm-impact-title {
+  padding: 8px 12px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: #f7f8fa;
+  border-bottom: 1px solid var(--divider);
+}
+
+.restore-confirm-impact-list {
+  margin: 0;
+  padding: 8px 12px 8px 28px;
+  list-style: disc;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.restore-confirm-impact-list li {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.restore-confirm-more {
+  color: var(--text-tertiary) !important;
+  font-style: italic;
+}
+
+.restore-confirm-field-count {
+  margin: 0;
+  padding: 6px 12px 8px;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  border-top: 1px solid var(--divider);
+}
+
+.restore-confirm-note {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.restore-confirm-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px 20px;
+}
+
 /* ─── Action menu ─── */
 .action-menu {
   position: absolute;
