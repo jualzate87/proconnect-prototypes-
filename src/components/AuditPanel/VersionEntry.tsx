@@ -343,7 +343,7 @@ export default function VersionEntry({ version }: VersionEntryProps) {
                       Undo this change
                     </button>
                   )}
-                  {isPreviewing && (
+                  {!isCurrent && (
                     <button className="action-menu-item" onClick={handleRevert}>
                       <svg viewBox="0 0 14 14" fill="none" width="13" height="13">
                         <path d="M3 7a4 4 0 104-4H4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
