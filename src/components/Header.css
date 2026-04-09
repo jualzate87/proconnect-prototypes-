@@ -178,7 +178,7 @@
   font-size: var(--font-size-md);
   font-weight: 600;
   color: var(--action-primary);
-  background: #e6f0ff;
+  background: #E2E9ED;
   border-radius: 20px;
   white-space: nowrap;
 }
