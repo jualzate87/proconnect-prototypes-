@@ -42,6 +42,16 @@ function formatTime(timestamp: number): string {
   return date.toLocaleDateString([], { month: 'short', day: 'numeric' })
 }
 
+function formatWorkSpan(fromTimestamp: number): string {
+  const ms = Date.now() - fromTimestamp
+  const minutes = Math.round(ms / 60000)
+  const hours   = Math.round(ms / 3600000)
+  const days    = Math.round(ms / 86400000)
+  if (minutes < 60)  return `the past ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`
+  if (hours < 24)    return `the past ${hours} ${hours === 1 ? 'hour' : 'hours'}`
+  return `the past ${days} ${days === 1 ? 'day' : 'days'}`
+}
+
 export default function VersionEntry({ version }: VersionEntryProps) {
   const {
     auditLog,
@@ -57,9 +67,10 @@ export default function VersionEntry({ version }: VersionEntryProps) {
   const isCurrent    = version.id === auditLog.currentVersionId
   const isPreviewing = previewVersionId === version.id
 
-  const [showMenu, setShowMenu]             = useState(false)
-  const [showDiff, setShowDiff]             = useState(false)
+  const [showMenu, setShowMenu]                   = useState(false)
+  const [showDiff, setShowDiff]                   = useState(false)
   const [showRestoreConfirm, setShowRestoreConfirm] = useState(false)
+  const [showUndoConfirm, setShowUndoConfirm]     = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
   // Close menu on outside click
@@ -72,15 +83,19 @@ export default function VersionEntry({ version }: VersionEntryProps) {
     return () => document.removeEventListener('mousedown', handler)
   }, [showMenu])
 
-  // Close modals on Escape
+  // Close any open modal on Escape
   useEffect(() => {
-    if (!showDiff && !showRestoreConfirm) return
+    if (!showDiff && !showRestoreConfirm && !showUndoConfirm) return
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { setShowDiff(false); setShowRestoreConfirm(false) }
+      if (e.key === 'Escape') {
+        setShowDiff(false)
+        setShowRestoreConfirm(false)
+        setShowUndoConfirm(false)
+      }
     }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
-  }, [showDiff, showRestoreConfirm])
+  }, [showDiff, showRestoreConfirm, showUndoConfirm])
 
   const typeColor = getChangeTypeColor(version.changeType)
   const typeLabel = CHANGE_TYPE_LABELS[version.changeType] || version.changeType
@@ -104,16 +119,12 @@ export default function VersionEntry({ version }: VersionEntryProps) {
   }
 
   // ── Action menu handlers ──────────────────────────────────────────────────
-  const handlePreview = () => { previewVersion(version.id); setShowMenu(false) }
-  const handleRevert  = () => { setShowRestoreConfirm(true); setShowMenu(false) }
-  const handleMenuUndo = () => { undoChange(version.id); setShowMenu(false) }
+  const handlePreview      = () => { previewVersion(version.id); setShowMenu(false) }
+  const handleRevert       = () => { setShowRestoreConfirm(true); setShowMenu(false) }
+  const handleMenuUndo     = () => { setShowUndoConfirm(true); setShowMenu(false) }
+  const handleDiffUndo     = () => { setShowDiff(false); setShowUndoConfirm(true) }
   const handleConfirmRestore = () => { revertToVersion(version.id); setShowRestoreConfirm(false) }
-
-  // ── Diff modal handlers ───────────────────────────────────────────────────
-  const handleUndo = () => {
-    undoChange(version.id)
-    setShowDiff(false)
-  }
+  const handleConfirmUndo  = () => { undoChange(version.id); setShowUndoConfirm(false) }
 
   // ── Diff helpers ──────────────────────────────────────────────────────────
   const getCurrentValue = (field: string): unknown => {
@@ -122,11 +133,21 @@ export default function VersionEntry({ version }: VersionEntryProps) {
     return sectionData?.[key]
   }
 
+  // ── Restore confirm: compute impact ──────────────────────────────────────
+  const versionIndex      = auditLog.versions.findIndex(v => v.id === version.id)
+  const versionsAfter     = versionIndex >= 0 ? auditLog.versions.slice(versionIndex + 1) : []
+  const changesAfterCount = versionsAfter.reduce((n, v) => n + (v.changes?.length ?? 0), 0)
+  const recentLabels      = versionsAfter.slice(-3).reverse().map(v => v.description)
+  const workSpan          = formatWorkSpan(version.timestamp)
+
+  const versionDate = new Date(version.timestamp)
+  const fullDate = versionDate.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })
+  const fullTime = versionDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+
   // ── Diff modal ────────────────────────────────────────────────────────────
   const diffModal = showDiff && hasChanges && createPortal(
     <div className="modal-overlay" onClick={() => setShowDiff(false)}>
       <div className="diff-modal" onClick={e => e.stopPropagation()}>
-        {/* Modal header */}
         <div className="diff-modal-header">
           <div className="diff-modal-title-wrap">
             <div className="entry-dot" style={{ background: typeColor, marginTop: 2 }} />
@@ -156,7 +177,6 @@ export default function VersionEntry({ version }: VersionEntryProps) {
           </button>
         </div>
 
-        {/* Table */}
         <div className="diff-modal-body">
           <table className="diff-modal-table">
             <thead>
@@ -189,11 +209,10 @@ export default function VersionEntry({ version }: VersionEntryProps) {
           </table>
         </div>
 
-        {/* Footer */}
         <div className="diff-modal-footer">
           <button className="modal-btn" onClick={() => setShowDiff(false)}>Close</button>
           {canUndo && (
-            <button className="modal-btn primary" onClick={handleUndo}>
+            <button className="modal-btn primary" onClick={handleDiffUndo}>
               <svg viewBox="0 0 14 14" fill="none" width="12" height="12" style={{ marginRight: 5 }}>
                 <path d="M3 7a4 4 0 104-4H4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
                 <path d="M4 5L2 7l2 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
@@ -207,22 +226,71 @@ export default function VersionEntry({ version }: VersionEntryProps) {
     document.body
   )
 
+  // ── Undo confirm modal ────────────────────────────────────────────────────
+  const undoConfirmModal = showUndoConfirm && canUndo && createPortal(
+    <div className="modal-overlay" onClick={() => setShowUndoConfirm(false)}>
+      <div className="restore-confirm-modal" onClick={e => e.stopPropagation()}>
+        <div className="restore-confirm-header">
+          <div className="restore-confirm-icon">
+            <svg viewBox="0 0 20 20" fill="none" width="20" height="20">
+              <path d="M3 10a7 7 0 107-7H7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+              <path d="M7 6L3.5 10 7 14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <h2 className="restore-confirm-title">Undo this change?</h2>
+        </div>
+
+        <div className="restore-confirm-body">
+          <p className="restore-confirm-lead">
+            The following field {version.changes!.length === 1 ? 'value' : 'values'} will be restored to {version.changes!.length === 1 ? 'its' : 'their'} previous state.
+          </p>
+
+          <div className="restore-confirm-impact">
+            <div className="restore-confirm-impact-title">Fields that will change</div>
+            <table className="undo-confirm-table">
+              <thead>
+                <tr>
+                  <th>Field</th>
+                  <th>Current value</th>
+                  <th>Will be restored to</th>
+                </tr>
+              </thead>
+              <tbody>
+                {version.changes!.map((change, i) => (
+                  <tr key={i}>
+                    <td className="undo-confirm-field">{fieldLabel(change.field)}</td>
+                    <td className="undo-confirm-current">{formatFieldValue(change.field, change.newValue)}</td>
+                    <td className="undo-confirm-restored">{formatFieldValue(change.field, change.oldValue)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <p className="restore-confirm-note">
+            This action will be logged in the activity log. You can redo it at any time.
+          </p>
+        </div>
+
+        <div className="restore-confirm-footer">
+          <button className="modal-btn" onClick={() => setShowUndoConfirm(false)}>Cancel</button>
+          <button className="modal-btn primary" onClick={handleConfirmUndo}>
+            <svg viewBox="0 0 14 14" fill="none" width="13" height="13" style={{ marginRight: 5 }}>
+              <path d="M3 7a4 4 0 104-4H4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+              <path d="M4 5L2 7l2 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Undo this change
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  )
+
   // ── Restore confirm modal ─────────────────────────────────────────────────
-  const versionIndex    = auditLog.versions.findIndex(v => v.id === version.id)
-  const versionsAfter   = versionIndex >= 0 ? auditLog.versions.slice(versionIndex + 1) : []
-  const changesAfterCount = versionsAfter.reduce((n, v) => n + (v.changes?.length ?? 0), 0)
-  const recentLabels    = versionsAfter.slice(-3).reverse().map(v => v.description)
-
-  const versionDate = new Date(version.timestamp)
-  const fullDate = versionDate.toLocaleDateString([], {
-    weekday: 'long', month: 'long', day: 'numeric',
-  })
-  const fullTime = versionDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-
   const restoreConfirmModal = showRestoreConfirm && createPortal(
     <div className="modal-overlay" onClick={() => setShowRestoreConfirm(false)}>
       <div className="restore-confirm-modal" onClick={e => e.stopPropagation()}>
-        {/* Header */}
         <div className="restore-confirm-header">
           <div className="restore-confirm-icon">
             <svg viewBox="0 0 20 20" fill="none" width="20" height="20">
@@ -233,18 +301,18 @@ export default function VersionEntry({ version }: VersionEntryProps) {
           <h2 className="restore-confirm-title">Restore to this version?</h2>
         </div>
 
-        {/* Body */}
         <div className="restore-confirm-body">
           <p className="restore-confirm-lead">
             Your return will go back to how it looked on{' '}
-            <strong>{fullDate} at {fullTime}</strong>.
+            <strong>{fullDate} at {fullTime}</strong>.{' '}
+            {versionsAfter.length > 0 && (
+              <>All work from <strong>{workSpan}</strong> will be undone.</>
+            )}
           </p>
 
           {versionsAfter.length > 0 && (
             <div className="restore-confirm-impact">
-              <div className="restore-confirm-impact-title">
-                What will be undone
-              </div>
+              <div className="restore-confirm-impact-title">What will be undone</div>
               <ul className="restore-confirm-impact-list">
                 {recentLabels.map((label, i) => (
                   <li key={i}>{label}</li>
@@ -268,11 +336,8 @@ export default function VersionEntry({ version }: VersionEntryProps) {
           </p>
         </div>
 
-        {/* Footer */}
         <div className="restore-confirm-footer">
-          <button className="modal-btn" onClick={() => setShowRestoreConfirm(false)}>
-            Cancel
-          </button>
+          <button className="modal-btn" onClick={() => setShowRestoreConfirm(false)}>Cancel</button>
           <button className="modal-btn primary" onClick={handleConfirmRestore}>
             <svg viewBox="0 0 14 14" fill="none" width="13" height="13" style={{ marginRight: 5 }}>
               <path d="M3 7a4 4 0 104-4H4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
@@ -297,11 +362,9 @@ export default function VersionEntry({ version }: VersionEntryProps) {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        {/* Change-type color dot */}
         <div className="entry-dot" style={{ background: typeColor }} />
 
         <div className="entry-body">
-          {/* Description row */}
           <div className="entry-top">
             <p className="entry-description">{version.description}</p>
 
@@ -357,7 +420,6 @@ export default function VersionEntry({ version }: VersionEntryProps) {
             </div>
           </div>
 
-          {/* Badge + author + time */}
           <div className="entry-meta">
             <span
               className="entry-type-badge"
@@ -374,7 +436,6 @@ export default function VersionEntry({ version }: VersionEntryProps) {
             <span className="entry-time">{formatTime(version.timestamp)}</span>
           </div>
 
-          {/* Section chips */}
           {summary.length > 0 && (
             <div className="entry-section-summary">
               {summary.map(s => (
@@ -390,6 +451,7 @@ export default function VersionEntry({ version }: VersionEntryProps) {
       </div>
 
       {diffModal}
+      {undoConfirmModal}
       {restoreConfirmModal}
     </>
   )
