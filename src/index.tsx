@@ -2,12 +2,14 @@ import React, { useState, useContext } from 'react'
 import ReactDOM from 'react-dom/client'
 import { AppContext, AppContextType, initializeAppState, createAppStore } from './lib/store'
 import AppLayout from './components/AppLayout'
+import TaxMappingPortal from './components/TaxMapping'
 import './index.css'
 
 function App() {
   const initialState = initializeAppState()
   const store = createAppStore(initialState)
   const [state, setState] = useState(initialState)
+  const [showTaxMapping, setShowTaxMapping] = useState(false)
 
   // Compute display data: show snapshot in preview mode, live data otherwise
   const displayTaxData = state.previewVersionId
@@ -17,6 +19,7 @@ function App() {
   const contextValue: AppContextType = {
     ...state,
     displayTaxData,
+    openTaxMapping: () => setShowTaxMapping(true),
 
     updateTaxData: (section, data) => {
       setState(prev => store.actions.updateTaxData(prev, section, data))
@@ -73,6 +76,7 @@ function App() {
 
   return (
     <AppContext.Provider value={contextValue}>
+      {showTaxMapping && <TaxMappingPortal onClose={() => setShowTaxMapping(false)} />}
       <AppLayout />
     </AppContext.Provider>
   )

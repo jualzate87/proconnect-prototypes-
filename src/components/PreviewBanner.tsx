@@ -55,12 +55,6 @@ export default function PreviewBanner() {
     <div className="modal-overlay" onClick={() => setShowConfirm(false)}>
       <div className="restore-confirm-modal" onClick={e => e.stopPropagation()}>
         <div className="restore-confirm-header">
-          <div className="restore-confirm-icon">
-            <svg viewBox="0 0 20 20" fill="none" width="20" height="20">
-              <path d="M5 10a5 5 0 105-5H7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-              <path d="M7 7L4.5 10 7 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
           <h2 className="restore-confirm-title">Restore to this version?</h2>
         </div>
 
@@ -102,10 +96,6 @@ export default function PreviewBanner() {
         <div className="restore-confirm-footer">
           <button className="modal-btn" onClick={() => setShowConfirm(false)}>Cancel</button>
           <button className="modal-btn primary" onClick={handleConfirmRestore}>
-            <svg viewBox="0 0 14 14" fill="none" width="13" height="13" style={{ marginRight: 5 }}>
-              <path d="M3 7a4 4 0 104-4H4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-              <path d="M4 5L2 7l2 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
             Restore version
           </button>
         </div>

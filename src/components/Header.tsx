@@ -2,7 +2,7 @@ import { useAppContext } from '../index'
 import './Header.css'
 
 export default function Header() {
-  const { previewVersionId, returnName } = useAppContext()
+  const { previewVersionId, returnName, openTaxMapping } = useAppContext()
   const isPreview = !!previewVersionId
 
   return (
@@ -28,7 +28,7 @@ export default function Header() {
             </svg>
             Notifications
           </button>
-          <button className="header-top-btn">
+          <button className="header-top-btn" onClick={openTaxMapping}>
             {/* Settings icon — Intuit design */}
             <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M10.0201 6.65206H10.0143C9.1302 6.65206 8.28235 7.00325 7.65723 7.62837C7.03211 8.25349 6.68092 9.10134 6.68092 9.98539C6.68092 10.8694 7.03211 11.7173 7.65723 12.3424C8.28235 12.9675 9.1302 13.3187 10.0143 13.3187C10.8983 13.3195 11.7465 12.9691 12.3721 12.3445C12.9978 11.7199 13.3497 10.8724 13.3505 9.98831C13.3513 9.10425 13.0008 8.2561 12.3763 7.63043C11.7517 7.00476 10.9041 6.65283 10.0201 6.65206ZM10.0151 11.6521C9.68544 11.6517 9.36332 11.5535 9.08946 11.37C8.81559 11.1866 8.60229 10.926 8.47652 10.6213C8.35074 10.3166 8.31816 9.98143 8.38287 9.6582C8.44759 9.33497 8.6067 9.03819 8.84009 8.80539C8.99426 8.65045 9.17765 8.52765 9.37963 8.44411C9.58162 8.36057 9.79818 8.31795 10.0168 8.31873C10.4588 8.31873 10.8827 8.49432 11.1953 8.80688C11.5078 9.11944 11.6834 9.54337 11.6834 9.98539C11.6834 10.4274 11.5078 10.8513 11.1953 11.1639C10.8827 11.4765 10.4588 11.6521 10.0168 11.6521H10.0151Z" fill="currentColor"/>

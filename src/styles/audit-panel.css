@@ -289,10 +289,7 @@
 .version-entry:hover { background: var(--bg-page); }
 .version-entry--editing { background: var(--bg-white) !important; }
 
-.version-entry--current {
-  background: #E2E9ED;
-}
-.version-entry--current:hover { background: #d6dee3; }
+.version-entry--current:hover { background: var(--bg-page); }
 
 /* Colored indicator dot */
 .entry-dot {
@@ -396,6 +393,12 @@
 .entry-time {
   font-size: var(--font-size-sm);
   color: var(--text-tertiary);
+}
+
+.entry-duration {
+  font-size: var(--font-size-sm);
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ─── Inline change diffs ─── */
