@@ -262,3 +262,109 @@
   font-size: var(--font-size-sm);
   align-self: center;
 }
+
+/* ─── Settings dropdown menu ─── */
+.tm-settings-menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 800;
+}
+
+.tm-settings-menu {
+  position: fixed;
+  top: 48px;
+  right: 8px;
+  z-index: 850;
+  background: var(--bg-white);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(76, 85, 91, 0.2);
+  display: flex;
+  overflow: hidden;
+  min-width: 550px;
+}
+
+.tm-settings-col {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  min-width: 312px;
+}
+
+.tm-settings-col--right {
+  background: var(--bg-page);
+  min-width: 220px;
+  align-items: flex-end;
+  padding: 16px 20px;
+}
+
+.tm-settings-firm-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 16px;
+}
+
+.tm-settings-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  margin: 0 0 4px;
+}
+
+.tm-settings-divider {
+  border: none;
+  border-top: 1px solid var(--divider);
+  margin: 8px 0;
+}
+
+.tm-settings-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 0;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-primary);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font);
+  width: 100%;
+  transition: color 0.12s;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.tm-settings-item:hover { color: var(--action-primary); }
+
+.tm-settings-close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  align-self: flex-end;
+}
+.tm-settings-close:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+.tm-new-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: #d72792;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  flex-shrink: 0;
+}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useAppContext } from '../../index'
 import {
   RETURN_TYPES, AGENCIES, SECTIONS, FIELDS, CATEGORY_ORDER,
@@ -22,6 +22,12 @@ export default function TaxMappingPortal({ onClose }: Props) {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
     new Set(CATEGORY_ORDER)
   )
+  const [returnTypeOpen, setReturnTypeOpen]   = useState(false)
+  const [agencyOpen, setAgencyOpen]           = useState(false)
+
+  const returnTypeRef = useRef<HTMLDivElement>(null)
+  const agencyRef     = useRef<HTMLDivElement>(null)
+  const searchRef     = useRef<HTMLInputElement>(null)
 
   // Close on Escape
   useEffect(() => {
@@ -29,6 +35,16 @@ export default function TaxMappingPortal({ onClose }: Props) {
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [onClose])
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (returnTypeRef.current && !returnTypeRef.current.contains(e.target as Node)) setReturnTypeOpen(false)
+      if (agencyRef.current && !agencyRef.current.contains(e.target as Node)) setAgencyOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
 
   // Derive state code from selected agency
   const stateCode = useMemo(() => {
@@ -41,11 +57,8 @@ export default function TaxMappingPortal({ onClose }: Props) {
     const showSection = (!isFullSchema && selectedSectionId) ? selectedSectionId : null
 
     return FIELDS.filter(f => {
-      // Agency filter: hide state-specific fields unless that state is selected
       if (f.scope !== 'FEDERAL' && f.scope !== stateCode) return false
-      // Section filter (single section mode)
       if (showSection && f.sectionId !== showSection) return false
-      // Search filter
       if (search) {
         const q = search.toLowerCase()
         return (
@@ -58,13 +71,9 @@ export default function TaxMappingPortal({ onClose }: Props) {
     })
   }, [selectedSectionId, isFullSchema, stateCode, search])
 
-  // Show Section column when in full schema or searching
   const showSectionCol = isFullSchema || !!search || !selectedSectionId
-
-  // Active section metadata
   const activeSection = SECTIONS.find(s => s.id === selectedSectionId)
 
-  // Grouped view for full schema
   const groupedFields = useMemo(() => {
     if (!showSectionCol) return null
     const groups: { section: TaxSection; fields: TaxField[] }[] = []
@@ -96,24 +105,24 @@ export default function TaxMappingPortal({ onClose }: Props) {
     setSearch('')
   }
 
-  function copyCodeId(codeId: string) {
-    navigator.clipboard.writeText(codeId).catch(() => {})
-    setCopiedId(codeId)
+  function copyCodeId(key: string) {
+    setCopiedId(key)
     setTimeout(() => setCopiedId(null), 1500)
   }
 
   function buildCsvString(fields: TaxField[]) {
     const header = showSectionCol
-      ? 'Field Label\tSection\tSeries\tCode ID\tPrefix\tType\tScope'
-      : 'Field Label\tSeries\tCode ID\tPrefix\tType\tScope'
+      ? 'Field Label\tSection\tSeries\tCode ID\tPrefix\tType\tAgency'
+      : 'Field Label\tSeries\tCode ID\tPrefix\tType\tAgency'
     const sectionMap = Object.fromEntries(SECTIONS.map(s => [s.id, s]))
     const rows = fields.map(f => {
       const sec = sectionMap[f.sectionId]
-      const prefix = f.prefix === 'static' ? '1' : '[n]'
+      const prefix = f.prefix === 'static' ? '1' : '1+'
+      const agencyVal = f.scope === 'FEDERAL' ? 'Federal' : AGENCIES.find(a => a.stateCode === f.scope)?.label.replace('Federal + ', '') ?? f.scope
       if (showSectionCol) {
-        return [f.label, sec?.label ?? '', sec?.seriesId ?? '', f.codeId, prefix, f.type, f.scope].join('\t')
+        return [f.label, sec?.label ?? '', sec?.seriesId ?? '', f.codeId, prefix, f.type, agencyVal].join('\t')
       }
-      return [f.label, sec?.seriesId ?? '', f.codeId, prefix, f.type, f.scope].join('\t')
+      return [f.label, sec?.seriesId ?? '', f.codeId, prefix, f.type, agencyVal].join('\t')
     })
     return [header, ...rows].join('\n')
   }
@@ -137,12 +146,12 @@ export default function TaxMappingPortal({ onClose }: Props) {
     URL.revokeObjectURL(url)
   }
 
-  // Title for content header
   const contentTitle = isFullSchema
     ? 'Full Agency Schema'
     : activeSection?.label ?? 'Select a section'
-  const contentSeries = activeSection ? `Series ${activeSection.seriesId}` : ''
   const agencyLabel = AGENCIES.find(a => a.value === agency)?.label ?? 'Federal'
+  const returnTypeLabel = returnType
+  const agencyDisplayLabel = AGENCIES.find(a => a.value === agency)?.label ?? 'Federal'
 
   function renderTableRows() {
     if (showSectionCol && groupedFields) {
@@ -161,6 +170,9 @@ export default function TaxMappingPortal({ onClose }: Props) {
   function renderFieldRow(field: TaxField, i: number, showSection: boolean) {
     const section = SECTIONS.find(s => s.id === field.sectionId)
     const copyKey = field.codeId + field.sectionId + i
+    const agencyVal = field.scope === 'FEDERAL'
+      ? 'Federal'
+      : AGENCIES.find(a => a.stateCode === field.scope)?.label.replace('Federal + ', '') ?? field.scope
 
     return (
       <tr key={`${field.sectionId}-${field.codeId}-${i}`}>
@@ -168,9 +180,7 @@ export default function TaxMappingPortal({ onClose }: Props) {
         {showSection && (
           <td className="tm-section-cell">{section?.label}</td>
         )}
-        <td>
-          <span className="tm-badge-series">{section?.seriesId}</span>
-        </td>
+        <td style={{ fontFamily: 'var(--font)', fontSize: 14 }}>{section?.seriesId}</td>
         <td>
           <button
             className="tm-code-id-btn"
@@ -193,17 +203,15 @@ export default function TaxMappingPortal({ onClose }: Props) {
             }
           </button>
         </td>
-        <td>
-          <span className={`tm-badge-prefix tm-badge-prefix--${field.prefix}`}>
-            {field.prefix === 'static' ? '1' : '[n]'}
-          </span>
+        <td style={{ fontFamily: 'var(--font)', fontSize: 14 }}>
+          {field.prefix === 'static' ? '1' : '1+'}
         </td>
         <td>
           <span className="tm-badge-type">{field.type}</span>
         </td>
         <td>
           <span className={`tm-badge-scope ${field.scope === 'FEDERAL' ? 'tm-badge-scope--federal' : 'tm-badge-scope--state'}`}>
-            {field.scope}
+            {agencyVal}
           </span>
         </td>
       </tr>
@@ -221,33 +229,81 @@ export default function TaxMappingPortal({ onClose }: Props) {
       <div className="tm-header">
         <h2 className="tm-header-title">Tax Mapping</h2>
         <button className="tm-close-btn" onClick={onClose} title="Close">
-          <svg viewBox="0 0 14 14" fill="none" width="14" height="14">
+          <svg viewBox="0 0 14 14" fill="none" width="16" height="16">
             <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
           </svg>
         </button>
       </div>
 
-      {/* ── Selection Row ── */}
-      <div className="tm-selection">
-        <span className="tm-selection-label">Select return type and agency</span>
-        <select
-          className="tm-select"
-          value={returnType}
-          onChange={e => setReturnType(e.target.value)}
-        >
-          {RETURN_TYPES.map(rt => (
-            <option key={rt} value={rt}>{rt}</option>
-          ))}
-        </select>
-        <select
-          className="tm-select"
-          value={agency}
-          onChange={e => setAgency(e.target.value)}
-        >
-          {AGENCIES.map(ag => (
-            <option key={ag.value} value={ag.value}>{ag.label}</option>
-          ))}
-        </select>
+      {/* ── Intro: centered title + dropdowns ── */}
+      <div className="tm-intro">
+        <div className="tm-intro-text">
+          <h3 className="tm-intro-title">Find the right code for any ProConnect field</h3>
+          <p className="tm-intro-desc">
+            Each field in ProConnect Tax has a unique code you can use to inject data via the API.{' '}
+            <a
+              href="https://developer.intuit.com/app/developer/qbotax/docs/api-reference"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="tm-intro-link"
+            >
+              View full API documentation →
+            </a>
+          </p>
+        </div>
+        <div className="tm-intro-selects">
+          {/* Return Type pill dropdown */}
+          <div className="filter-pill-wrap tm-filter-pill-wrap" ref={returnTypeRef}>
+            <button
+              className={`filter-pill ${returnTypeOpen ? 'filter-pill--active' : ''}`}
+              onClick={() => { setReturnTypeOpen(v => !v); setAgencyOpen(false) }}
+            >
+              {returnTypeLabel}
+              <svg viewBox="0 0 10 6" fill="none" width="10" height="6">
+                <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            {returnTypeOpen && (
+              <div className="filter-dropdown tm-filter-dropdown">
+                {RETURN_TYPES.map(rt => (
+                  <button
+                    key={rt}
+                    className={`filter-dropdown-item ${rt === returnType ? 'active' : ''}`}
+                    onClick={() => { setReturnType(rt); setReturnTypeOpen(false) }}
+                  >
+                    {rt}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Agency pill dropdown */}
+          <div className="filter-pill-wrap tm-filter-pill-wrap" ref={agencyRef}>
+            <button
+              className={`filter-pill ${agencyOpen ? 'filter-pill--active' : ''}`}
+              onClick={() => { setAgencyOpen(v => !v); setReturnTypeOpen(false) }}
+            >
+              {agencyDisplayLabel}
+              <svg viewBox="0 0 10 6" fill="none" width="10" height="6">
+                <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            {agencyOpen && (
+              <div className="filter-dropdown tm-filter-dropdown">
+                {AGENCIES.map(ag => (
+                  <button
+                    key={ag.value}
+                    className={`filter-dropdown-item ${ag.value === agency ? 'active' : ''}`}
+                    onClick={() => { setAgency(ag.value); setAgencyOpen(false) }}
+                  >
+                    {ag.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* ── Body ── */}
@@ -255,29 +311,36 @@ export default function TaxMappingPortal({ onClose }: Props) {
 
         {/* ── Left Nav ── */}
         <nav className="tm-nav">
-          {/* Search */}
+          {/* Search — audit-log style */}
           <div className="tm-nav-search-wrap">
-            <div className="tm-nav-search">
-              <svg viewBox="0 0 16 16" fill="none" width="14" height="14">
-                <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.3"/>
-                <path d="M10.5 10.5l2.5 2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-              </svg>
-              <input
-                type="text"
-                placeholder="Search codes or fields…"
-                value={search}
-                onChange={e => { setSearch(e.target.value); if (e.target.value) setIsFullSchema(true) }}
-              />
-              {search && (
-                <button
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 0 }}
-                  onClick={() => setSearch('')}
-                >
-                  <svg viewBox="0 0 12 12" fill="none" width="12" height="12">
-                    <path d="M2 2l8 8M10 2L2 10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+            <div className="audit-search-wrap" style={{ padding: 0 }}>
+              <div className="audit-search-inner">
+                <span className="audit-search-icon">
+                  <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+                    <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="1.4"/>
+                    <path d="M16.5 16.5l4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
                   </svg>
-                </button>
-              )}
+                </span>
+                <input
+                  ref={searchRef}
+                  className="audit-search-input"
+                  type="text"
+                  placeholder="Search codes or fields"
+                  value={search}
+                  onChange={e => { setSearch(e.target.value); if (e.target.value) setIsFullSchema(true) }}
+                />
+                {search && (
+                  <button
+                    className="audit-search-clear"
+                    onClick={() => { setSearch(''); searchRef.current?.focus() }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                  >
+                    <svg viewBox="0 0 12 12" fill="none" width="12" height="12">
+                      <path d="M2 2l8 8M10 2L2 10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                    </svg>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -286,16 +349,18 @@ export default function TaxMappingPortal({ onClose }: Props) {
             className={`tm-nav-full-schema ${(isFullSchema && !search) ? 'tm-nav-full-schema--active' : ''}`}
             onClick={handleFullSchema}
           >
-            <svg viewBox="0 0 14 14" fill="none" width="13" height="13">
-              <path d="M2 3h10M2 7h10M2 11h10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-            </svg>
             Entire agency schema
+            {/* menu-expand icon: 3 lines + right arrow */}
+            <svg viewBox="0 0 20 20" fill="none" width="18" height="18" style={{ marginLeft: 'auto', flexShrink: 0 }}>
+              <path d="M3 5h10M3 10h10M3 15h6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+              <path d="M16 10l-3-3m3 3l-3 3m3-3H10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </button>
 
           {/* Nav Tree */}
           <div className="tm-nav-tree">
             {categorizedSections.map(({ category, sections }) => (
-              <div key={category} className="tm-nav-category">
+              <div key={category}>
                 <button
                   className="tm-nav-category-btn"
                   onClick={() => toggleCategory(category)}
@@ -315,12 +380,7 @@ export default function TaxMappingPortal({ onClose }: Props) {
                     onClick={() => handleSectionClick(section.id)}
                     title={section.label}
                   >
-                    <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {section.label}
-                    </span>
-                    {section.prefix === 'multi' && (
-                      <span className="tm-nav-multi-badge" title="Multi-instance — supports Prefix [n]">N</span>
-                    )}
+                    {section.label}
                   </button>
                 ))}
               </div>
@@ -332,15 +392,13 @@ export default function TaxMappingPortal({ onClose }: Props) {
         <div className="tm-content">
           {/* Content Header */}
           <div className="tm-content-header">
-            <div>
-              <h2 className="tm-content-title">{contentTitle}</h2>
-              {(contentSeries || agencyLabel) && (
-                <div className="tm-content-subtitle">
-                  {contentSeries && <>{contentSeries} · </>}
-                  Unified ProConnect Schema for {agencyLabel}
-                </div>
-              )}
-            </div>
+            <h2 className="tm-content-title">{contentTitle}</h2>
+            {activeSection && (
+              <span className="tm-scope-badge">Federal</span>
+            )}
+            {(activeSection?.seriesId) && (
+              <span className="tm-content-subtitle">Series {activeSection.seriesId} · {agencyLabel}</span>
+            )}
             <div className="tm-content-actions">
               <button className="tm-action-btn" onClick={handleCopyTable} title="Copy table as CSV">
                 <svg viewBox="0 0 14 14" fill="none" width="13" height="13">
@@ -360,31 +418,35 @@ export default function TaxMappingPortal({ onClose }: Props) {
           </div>
 
           {/* Info Box */}
-          {activeSection && (
+          {(activeSection || (isFullSchema && !activeSection)) && (
             <div className="tm-info-box">
-              <svg viewBox="0 0 16 16" fill="none" width="16" height="16">
-                <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.3"/>
-                <path d="M8 7v5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-                <circle cx="8" cy="5" r="0.8" fill="currentColor"/>
+              <svg viewBox="0 0 20 20" fill="none" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="10" cy="10" r="8.5" fill="#0077c5"/>
+                <path d="M10 9v6" stroke="#fff" strokeWidth="1.5" strokeLinecap="round"/>
+                <circle cx="10" cy="6.5" r="1" fill="#fff"/>
               </svg>
-              <span>
-                {activeSection.prefix === 'static'
-                  ? <><strong>Single-instance section (Prefix 1).</strong> Always use <code>1</code> as the prefix when mapping fields in this section.</>
-                  : <><strong>Multi-instance section (Prefix [n]).</strong> This section supports multiple entries. Start at <code>1</code> and increment for each instance — e.g., 1st {activeSection.label} = Prefix 1, 2nd = Prefix 2.</>
-                }
-              </span>
-            </div>
-          )}
-          {isFullSchema && !activeSection && (
-            <div className="tm-info-box">
-              <svg viewBox="0 0 16 16" fill="none" width="16" height="16">
-                <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.3"/>
-                <path d="M8 7v5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-                <circle cx="8" cy="5" r="0.8" fill="currentColor"/>
-              </svg>
-              <span>
-                <strong>Unified View.</strong> Showing all sections for <strong>{agencyLabel}</strong>. Use the <strong>Prefix</strong> column to determine mapping behavior — <span style={{ color: '#92400e', fontWeight: 600 }}>[n]</span> = multi-instance, <span style={{ fontWeight: 600 }}>1</span> = static.
-              </span>
+              <ul className="tm-info-list">
+                {activeSection ? (
+                  <>
+                    <li>
+                      {activeSection.prefix === 'static'
+                        ? <>Use prefix <strong>1</strong> for all fields in this section.</>
+                        : <>This section supports <strong>multiple entries</strong> — increment the <strong>prefix</strong> for each instance (1, 2, 3…).</>
+                      }
+                    </li>
+                    {stateCode && (
+                      <li><strong>Federal</strong> and <strong>{agencyLabel.replace('Federal + ', '')}-specific</strong> fields are shown together. Check the <strong>Agency</strong> column to see which apply to your state.</li>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <li>Showing all sections for <strong>{agencyLabel}</strong>. Sections marked <strong>1+</strong> support <strong>multiple entries</strong> — use an incrementing prefix for each.</li>
+                    {stateCode && (
+                      <li><strong>Federal</strong> and <strong>{agencyLabel.replace('Federal + ', '')}-specific</strong> fields are combined. Check the <strong>Agency</strong> column to see which apply to your state.</li>
+                    )}
+                  </>
+                )}
+              </ul>
             </div>
           )}
 
@@ -408,7 +470,7 @@ export default function TaxMappingPortal({ onClose }: Props) {
                     <th>Code ID</th>
                     <th>Prefix</th>
                     <th>Type</th>
-                    <th>Scope</th>
+                    <th>Agency</th>
                   </tr>
                 </thead>
                 <tbody>
