@@ -38,7 +38,6 @@ export default function PreviewBanner() {
   const versionIndex      = auditLog.versions.findIndex(v => v.id === version.id)
   const versionsAfter     = versionIndex >= 0 ? auditLog.versions.slice(versionIndex + 1) : []
   const changesAfterCount = versionsAfter.reduce((n, v) => n + (v.changes?.length ?? 0), 0)
-  const recentLabels      = versionsAfter.slice(-3).reverse().map(v => v.description)
   const workSpan          = formatWorkSpan(version.timestamp)
 
   const fullDate = new Date(version.timestamp).toLocaleDateString([], {
@@ -71,14 +70,9 @@ export default function PreviewBanner() {
             <div className="restore-confirm-impact">
               <div className="restore-confirm-impact-title">What will be undone</div>
               <ul className="restore-confirm-impact-list">
-                {recentLabels.map((label, i) => (
-                  <li key={i}>{label}</li>
+                {versionsAfter.slice().reverse().map((v, i) => (
+                  <li key={i}>{v.description}</li>
                 ))}
-                {versionsAfter.length > 3 && (
-                  <li className="restore-confirm-more">
-                    + {versionsAfter.length - 3} more {versionsAfter.length - 3 === 1 ? 'change' : 'changes'}
-                  </li>
-                )}
               </ul>
               {changesAfterCount > 0 && (
                 <p className="restore-confirm-field-count">

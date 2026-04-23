@@ -37,19 +37,6 @@ function formatTime(timestamp: number): string {
   return date.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ', ' + time
 }
 
-function formatDuration(ms: number): string {
-  const minutes = Math.round(ms / 60000)
-  const hours   = Math.floor(ms / 3600000)
-  const days    = Math.floor(ms / 86400000)
-  if (minutes < 60) return `${minutes}m`
-  if (hours < 24) {
-    const mins = Math.round((ms % 3600000) / 60000)
-    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`
-  }
-  const hrs = Math.round((ms % 86400000) / 3600000)
-  return hrs > 0 ? `${days}d ${hrs}h` : `${days}d`
-}
-
 function formatWorkSpan(fromTimestamp: number): string {
   const ms = Date.now() - fromTimestamp
   const minutes = Math.round(ms / 60000)
@@ -141,20 +128,10 @@ export default function VersionEntry({ version }: VersionEntryProps) {
     return sectionData?.[key]
   }
 
-  // ── Duration (time this version was active) ───────────────────────────────
-  const versionIndex      = auditLog.versions.findIndex(v => v.id === version.id)
-  const newerVersion      = versionIndex > 0
-                              ? auditLog.versions[versionIndex - 1]
-                              : null
-  const durationMs        = newerVersion
-                              ? newerVersion.timestamp - version.timestamp
-                              : Date.now() - version.timestamp
-  const durationLabel     = formatDuration(durationMs)
-
   // ── Restore confirm: compute impact ──────────────────────────────────────
+  const versionIndex      = auditLog.versions.findIndex(v => v.id === version.id)
   const versionsAfter     = versionIndex >= 0 ? auditLog.versions.slice(versionIndex + 1) : []
   const changesAfterCount = versionsAfter.reduce((n, v) => n + (v.changes?.length ?? 0), 0)
-  const recentLabels      = versionsAfter.slice(-3).reverse().map(v => v.description)
   const workSpan          = formatWorkSpan(version.timestamp)
 
   const versionDate = new Date(version.timestamp)
@@ -179,7 +156,7 @@ export default function VersionEntry({ version }: VersionEntryProps) {
                     borderColor: typeColor + '40',
                   }}
                 >
-                  {typeLabel}{version.apiSource ? ` · ${version.apiSource}` : ''}
+                  {typeLabel}
                 </span>
                 <span className="entry-author">{version.author}</span>
                 <span className="entry-sep">·</span>
@@ -310,14 +287,9 @@ export default function VersionEntry({ version }: VersionEntryProps) {
             <div className="restore-confirm-impact">
               <div className="restore-confirm-impact-title">What will be undone</div>
               <ul className="restore-confirm-impact-list">
-                {recentLabels.map((label, i) => (
-                  <li key={i}>{label}</li>
+                {versionsAfter.slice().reverse().map((v, i) => (
+                  <li key={i}>{v.description}</li>
                 ))}
-                {versionsAfter.length > 3 && (
-                  <li className="restore-confirm-more">
-                    + {versionsAfter.length - 3} more {versionsAfter.length - 3 === 1 ? 'change' : 'changes'}
-                  </li>
-                )}
               </ul>
               {changesAfterCount > 0 && (
                 <p className="restore-confirm-field-count">
@@ -421,13 +393,11 @@ export default function VersionEntry({ version }: VersionEntryProps) {
                 borderColor: typeColor + '40',
               }}
             >
-              {typeLabel}{version.apiSource ? ` · ${version.apiSource}` : ''}
+              {typeLabel}
             </span>
             <span className="entry-author">{version.author}</span>
             <span className="entry-sep">·</span>
             <span className="entry-time">{formatTime(version.timestamp)}</span>
-            <span className="entry-sep">·</span>
-            <span className="entry-duration">{durationLabel}</span>
           </div>
 
           {summary.length > 0 && (

@@ -275,7 +275,7 @@ export function createInitialAuditLog(): AuditLog {
       author: 'Sarah Miller',
       label: 'SE Income Entry',
       changeType: 'manual_entry',
-      description: 'Entered self-employment income',
+      description: 'Changed self-employment income',
       dataSnapshot: snap2,
       changes: [
         { field: 'income.seIncome', oldValue: 0, newValue: 12500 },
@@ -289,7 +289,7 @@ export function createInitialAuditLog(): AuditLog {
       label: 'TaxDome Full Client Profile Import',
       changeType: 'api_import',
       apiSource: 'TaxDome',
-      description: 'Imported 24 fields across 4 sections from TaxDome API',
+      description: 'API imported interest & dividend data',
       dataSnapshot: snap3,
       changes: [
         // Wages & Salaries — 10 fields
@@ -364,7 +364,7 @@ export function createInitialAuditLog(): AuditLog {
       author: 'Sarah Miller',
       label: 'Capital Gains Entry',
       changeType: 'manual_entry',
-      description: 'Entered capital gains — Investments',
+      description: 'Changed capital gains — Investments',
       dataSnapshot: snap5,
       changes: [
         { field: 'investment.capitalGains',   oldValue: 0,  newValue: 8200 },
@@ -380,7 +380,7 @@ export function createInitialAuditLog(): AuditLog {
       label: 'Alfred Dividend & Gains Update',
       changeType: 'api_import',
       apiSource: 'Alfred',
-      description: 'Imported dividend & short-term gains data from Alfred API',
+      description: 'API imported dividend & short-term gains data',
       dataSnapshot: snap6,
       changes: [
         { field: 'interest.dividendIncome',   oldValue: 980,  newValue: 1240 },
@@ -420,7 +420,7 @@ export function createInitialAuditLog(): AuditLog {
       author: 'David Hansen',
       label: 'Bing Equipment Wage Correction',
       changeType: 'manual_entry',
-      description: 'Corrected W-2 wages · Bing Equipment',
+      description: 'Changed W-2 wages · Bing Equipment',
       dataSnapshot: snap8,
       changes: [
         { field: 'income.w2Wages',       oldValue: 78420, newValue: 79150 },
@@ -441,7 +441,7 @@ export function createInitialAuditLog(): AuditLog {
       author: 'Sarah Miller',
       label: 'Rental Property Entry',
       changeType: 'manual_entry',
-      description: 'Entered rental property income & details',
+      description: 'Changed rental property income & details',
       dataSnapshot: snap9,
       changes: [
         { field: 'other.rentalIncome',    oldValue: 0,  newValue: 4800 },
@@ -461,7 +461,7 @@ export function createInitialAuditLog(): AuditLog {
       label: 'TaxDome K-1 Passive Income Import',
       changeType: 'api_import',
       apiSource: 'TaxDome',
-      description: 'Imported K-1 partnership income from TaxDome API',
+      description: 'API imported K-1 partnership income',
       dataSnapshot: snap10,
       changes: [
         { field: 'other.k1PartnerName', oldValue: '', newValue: 'Green Valley Partners LLC' },
