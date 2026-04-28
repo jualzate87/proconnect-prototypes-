@@ -20,15 +20,18 @@ function formatWorkSpan(fromTimestamp: number): string {
 }
 
 export default function PreviewBanner() {
-  const { auditLog, previewVersionId, getVersionById, previewVersion, revertToVersion } = useAppContext()
-  const [showConfirm, setShowConfirm] = useState(false)
+  const { auditLog, previewVersionId, getVersionById, previewVersion, revertToVersion, undoChange } = useAppContext()
+  const [showConfirm, setShowConfirm]         = useState(false)
+  const [showUndoConfirm, setShowUndoConfirm] = useState(false)
 
   useEffect(() => {
-    if (!showConfirm) return
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowConfirm(false) }
+    if (!showConfirm && !showUndoConfirm) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { setShowConfirm(false); setShowUndoConfirm(false) }
+    }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
-  }, [showConfirm])
+  }, [showConfirm, showUndoConfirm])
 
   if (!previewVersionId) return null
   const version = getVersionById(previewVersionId)
@@ -45,10 +48,44 @@ export default function PreviewBanner() {
   })
   const fullTime = new Date(version.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
+  const canUndo = (version.changes?.length ?? 0) > 0 &&
+    version.changeType !== 'revert' &&
+    version.changeType !== 'copy'
+
   const handleConfirmRestore = () => {
     revertToVersion(previewVersionId)
     setShowConfirm(false)
   }
+
+  const handleConfirmUndo = () => {
+    undoChange(previewVersionId)
+    setShowUndoConfirm(false)
+  }
+
+  const undoConfirmModal = showUndoConfirm && canUndo && createPortal(
+    <div className="modal-overlay" onClick={() => setShowUndoConfirm(false)}>
+      <div className="restore-confirm-modal" onClick={e => e.stopPropagation()}>
+        <div className="restore-confirm-header">
+          <h2 className="restore-confirm-title">Undo this change?</h2>
+        </div>
+        <div className="restore-confirm-body">
+          <p className="restore-confirm-lead">
+            This will undo <strong>{version.description}</strong> and revert the affected fields to their previous values.
+          </p>
+          <p className="restore-confirm-note">
+            This action will be logged in the activity log. You can redo it at any time.
+          </p>
+        </div>
+        <div className="restore-confirm-footer">
+          <button className="modal-btn" onClick={() => setShowUndoConfirm(false)}>Cancel</button>
+          <button className="modal-btn primary" onClick={handleConfirmUndo}>
+            Undo this change
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  )
 
   const confirmModal = showConfirm && createPortal(
     <div className="modal-overlay" onClick={() => setShowConfirm(false)}>
@@ -121,6 +158,15 @@ export default function PreviewBanner() {
             </svg>
             Read-only · highlighted fields changed in this version
           </span>
+          {canUndo && (
+            <button className="preview-restore-btn" onClick={() => setShowUndoConfirm(true)}>
+              <svg viewBox="0 0 14 14" fill="none" width="12" height="12">
+                <path d="M3 7a4 4 0 104-4H4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                <path d="M4 5L2 7l2 2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Undo this change
+            </button>
+          )}
           <button className="preview-restore-btn" onClick={() => setShowConfirm(true)}>
             <svg viewBox="0 0 14 14" fill="none" width="12" height="12">
               <path d="M3 7a4 4 0 104-4H4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
@@ -135,6 +181,7 @@ export default function PreviewBanner() {
       </div>
 
       {confirmModal}
+      {undoConfirmModal}
     </>
   )
 }

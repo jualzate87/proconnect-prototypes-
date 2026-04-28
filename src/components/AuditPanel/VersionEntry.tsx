@@ -129,10 +129,9 @@ export default function VersionEntry({ version }: VersionEntryProps) {
   }
 
   // ── Restore confirm: compute impact ──────────────────────────────────────
-  const versionIndex      = auditLog.versions.findIndex(v => v.id === version.id)
-  const versionsAfter     = versionIndex >= 0 ? auditLog.versions.slice(versionIndex + 1) : []
-  const changesAfterCount = versionsAfter.reduce((n, v) => n + (v.changes?.length ?? 0), 0)
-  const workSpan          = formatWorkSpan(version.timestamp)
+  const versionIndex  = auditLog.versions.findIndex(v => v.id === version.id)
+  const versionsAfter = versionIndex >= 0 ? auditLog.versions.slice(versionIndex + 1) : []
+  const workSpan      = formatWorkSpan(version.timestamp)
 
   const versionDate = new Date(version.timestamp)
   const fullDate = versionDate.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })
@@ -226,30 +225,8 @@ export default function VersionEntry({ version }: VersionEntryProps) {
 
         <div className="restore-confirm-body">
           <p className="restore-confirm-lead">
-            The following field {version.changes!.length === 1 ? 'value' : 'values'} will be restored to {version.changes!.length === 1 ? 'its' : 'their'} previous state.
+            This will undo <strong>{version.description}</strong> and revert the affected fields to their previous values.
           </p>
-
-          <div className="restore-confirm-impact">
-            <table className="undo-confirm-table">
-              <thead>
-                <tr>
-                  <th>Field</th>
-                  <th>Current value</th>
-                  <th>Restore to</th>
-                </tr>
-              </thead>
-              <tbody>
-                {version.changes!.map((change, i) => (
-                  <tr key={i}>
-                    <td className="undo-confirm-field">{fieldLabel(change.field)}</td>
-                    <td className="undo-confirm-current">{formatFieldValue(change.field, change.newValue)}</td>
-                    <td className="undo-confirm-restored">{formatFieldValue(change.field, change.oldValue)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
           <p className="restore-confirm-note">
             This action will be logged in the activity log. You can redo it at any time.
           </p>
@@ -291,11 +268,6 @@ export default function VersionEntry({ version }: VersionEntryProps) {
                   <li key={i}>{v.description}</li>
                 ))}
               </ul>
-              {changesAfterCount > 0 && (
-                <p className="restore-confirm-field-count">
-                  {changesAfterCount} field {changesAfterCount === 1 ? 'value' : 'values'} will be overwritten.
-                </p>
-              )}
             </div>
           )}
 
@@ -404,7 +376,7 @@ export default function VersionEntry({ version }: VersionEntryProps) {
             <div className="entry-section-summary">
               {summary.map(s => (
                 <span key={s.name} className="entry-section-chip">
-                  {s.name} · {s.count} {s.count === 1 ? 'field' : 'fields'}
+                  {s.name}
                 </span>
               ))}
             </div>
