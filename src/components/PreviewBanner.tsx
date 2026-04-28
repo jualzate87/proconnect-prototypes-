@@ -156,7 +156,7 @@ export default function PreviewBanner() {
               <rect x="2" y="6" width="10" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.2"/>
               <path d="M4.5 6V4.5a2.5 2.5 0 015 0V6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
             </svg>
-            Read-only · highlighted fields changed in this version
+            Read-only
           </span>
           {canUndo && (
             <button className="preview-restore-btn" onClick={() => setShowUndoConfirm(true)}>

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Version } from '../../types'
 import { useAppContext } from '../../index'
-import { getChangeTypeColor, SECTION_DISPLAY, fieldLabel, formatFieldValue } from '../../lib/mock-data'
+import { getChangeTypeColor, SECTION_DISPLAY } from '../../lib/mock-data'
 
 interface VersionEntryProps {
   version: Version
@@ -50,20 +50,16 @@ function formatWorkSpan(fromTimestamp: number): string {
 export default function VersionEntry({ version }: VersionEntryProps) {
   const {
     auditLog,
-    taxData,
     previewVersionId,
     previewVersion,
     revertToVersion,
     undoChange,
-    setHighlight,
-    clearHighlight,
   } = useAppContext()
 
   const isCurrent    = version.id === auditLog.currentVersionId
   const isPreviewing = previewVersionId === version.id
 
   const [showMenu, setShowMenu]                   = useState(false)
-  const [showDiff, setShowDiff]                   = useState(false)
   const [showRestoreConfirm, setShowRestoreConfirm] = useState(false)
   const [showUndoConfirm, setShowUndoConfirm]     = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -80,17 +76,16 @@ export default function VersionEntry({ version }: VersionEntryProps) {
 
   // Close any open modal on Escape
   useEffect(() => {
-    if (!showDiff && !showRestoreConfirm && !showUndoConfirm) return
+    if (!showRestoreConfirm && !showUndoConfirm) return
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setShowDiff(false)
         setShowRestoreConfirm(false)
         setShowUndoConfirm(false)
       }
     }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
-  }, [showDiff, showRestoreConfirm, showUndoConfirm])
+  }, [showRestoreConfirm, showUndoConfirm])
 
   const typeColor = getChangeTypeColor(version.changeType)
   const typeLabel = CHANGE_TYPE_LABELS[version.changeType] || version.changeType
@@ -103,30 +98,12 @@ export default function VersionEntry({ version }: VersionEntryProps) {
     version.changeType !== 'revert' &&
     version.changeType !== 'copy'
 
-  // ── Highlight on hover ────────────────────────────────────────────────────
-  const handleMouseEnter = () => {
-    if (previewVersionId) return
-    if (hasRelated) setHighlight(version.relatedFields!, typeColor)
-  }
-  const handleMouseLeave = () => {
-    if (previewVersionId) return
-    clearHighlight()
-  }
-
   // ── Action menu handlers ──────────────────────────────────────────────────
   const handlePreview      = () => { previewVersion(version.id); setShowMenu(false) }
   const handleRevert       = () => { setShowRestoreConfirm(true); setShowMenu(false) }
   const handleMenuUndo     = () => { setShowUndoConfirm(true); setShowMenu(false) }
-  const handleDiffUndo     = () => { setShowDiff(false); setShowUndoConfirm(true) }
   const handleConfirmRestore = () => { revertToVersion(version.id); setShowRestoreConfirm(false) }
   const handleConfirmUndo  = () => { undoChange(version.id); setShowUndoConfirm(false) }
-
-  // ── Diff helpers ──────────────────────────────────────────────────────────
-  const getCurrentValue = (field: string): unknown => {
-    const [section, key] = field.split('.')
-    const sectionData = taxData[section as keyof typeof taxData] as Record<string, unknown> | undefined
-    return sectionData?.[key]
-  }
 
   // ── Restore confirm: compute impact ──────────────────────────────────────
   const versionIndex  = auditLog.versions.findIndex(v => v.id === version.id)
@@ -136,84 +113,6 @@ export default function VersionEntry({ version }: VersionEntryProps) {
   const versionDate = new Date(version.timestamp)
   const fullDate = versionDate.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })
   const fullTime = versionDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-
-  // ── Diff modal ────────────────────────────────────────────────────────────
-  const diffModal = showDiff && hasChanges && createPortal(
-    <div className="modal-overlay" onClick={() => setShowDiff(false)}>
-      <div className="diff-modal" onClick={e => e.stopPropagation()}>
-        <div className="diff-modal-header">
-          <div className="diff-modal-title-wrap">
-            <div className="entry-dot" style={{ background: typeColor, marginTop: 2 }} />
-            <div>
-              <h2 className="diff-modal-title">{version.description}</h2>
-              <div className="diff-modal-meta">
-                <span
-                  className="entry-type-badge"
-                  style={{
-                    background:  typeColor + '18',
-                    color:       typeColor,
-                    borderColor: typeColor + '40',
-                  }}
-                >
-                  {typeLabel}
-                </span>
-                <span className="entry-author">{version.author}</span>
-                <span className="entry-sep">·</span>
-                <span className="entry-time">{formatTime(version.timestamp)}</span>
-              </div>
-            </div>
-          </div>
-          <button className="diff-modal-close" onClick={() => setShowDiff(false)} title="Close">
-            <svg viewBox="0 0 14 14" fill="none" width="14" height="14">
-              <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-            </svg>
-          </button>
-        </div>
-
-        <div className="diff-modal-body">
-          <table className="diff-modal-table">
-            <thead>
-              <tr>
-                <th>Field</th>
-                <th>Before</th>
-                <th>After this change</th>
-                <th>Current</th>
-              </tr>
-            </thead>
-            <tbody>
-              {version.changes!.map((change, i) => {
-                const currentVal = getCurrentValue(change.field)
-                const currentDiffers = currentVal !== change.newValue
-                return (
-                  <tr key={i}>
-                    <td className="diff-modal-field">{fieldLabel(change.field)}</td>
-                    <td className="diff-modal-before">{formatFieldValue(change.field, change.oldValue)}</td>
-                    <td className="diff-modal-after">{formatFieldValue(change.field, change.newValue)}</td>
-                    <td className="diff-modal-current">
-                      {currentDiffers && (
-                        <span className="entry-diff-conflict" title="A later change also modified this field">●</span>
-                      )}
-                      {formatFieldValue(change.field, currentVal)}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="diff-modal-footer">
-          <button className="modal-btn" onClick={() => setShowDiff(false)}>Close</button>
-          {canUndo && (
-            <button className="modal-btn primary" onClick={handleDiffUndo}>
-              Undo this change
-            </button>
-          )}
-        </div>
-      </div>
-    </div>,
-    document.body
-  )
 
   // ── Undo confirm modal ────────────────────────────────────────────────────
   const undoConfirmModal = showUndoConfirm && canUndo && createPortal(
@@ -295,8 +194,6 @@ export default function VersionEntry({ version }: VersionEntryProps) {
           isCurrent && !isPreviewing ? 'version-entry--current'   : '',
           isPreviewing               ? 'version-entry--previewing' : '',
         ].filter(Boolean).join(' ')}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
       >
         <div className="entry-dot" style={{ background: typeColor }} />
 
@@ -325,14 +222,6 @@ export default function VersionEntry({ version }: VersionEntryProps) {
                     </svg>
                     Preview this version
                   </button>
-                  {hasChanges && (
-                    <button className="action-menu-item" onClick={() => { setShowDiff(true); setShowMenu(false) }}>
-                      <svg viewBox="0 0 14 14" fill="none" width="13" height="13">
-                        <path d="M2 4h10M2 7h7M2 10h5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-                      </svg>
-                      View changes
-                    </button>
-                  )}
                   {canUndo && (
                     <button className="action-menu-item" onClick={handleMenuUndo}>
                       <svg viewBox="0 0 14 14" fill="none" width="13" height="13">
@@ -386,7 +275,6 @@ export default function VersionEntry({ version }: VersionEntryProps) {
         </div>
       </div>
 
-      {diffModal}
       {undoConfirmModal}
       {restoreConfirmModal}
     </>
