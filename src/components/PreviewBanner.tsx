@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useAppContext } from '../index'
+import { fieldLabel, formatFieldValue } from '../lib/mock-data'
 import './PreviewBanner.css'
 
 function formatTimestamp(ts: number): string {
@@ -38,10 +39,15 @@ export default function PreviewBanner() {
   if (!version) return null
 
   // Compute impact
-  const versionIndex      = auditLog.versions.findIndex(v => v.id === version.id)
-  const versionsAfter     = versionIndex >= 0 ? auditLog.versions.slice(versionIndex + 1) : []
-  const changesAfterCount = versionsAfter.reduce((n, v) => n + (v.changes?.length ?? 0), 0)
-  const workSpan          = formatWorkSpan(version.timestamp)
+  const workSpan = formatWorkSpan(version.timestamp)
+
+  // All entries with a later timestamp — sorted newest first for display
+  const impactedVersions = auditLog.versions
+    .filter(v => v.timestamp > version.timestamp)
+    .sort((a, b) => b.timestamp - a.timestamp)
+
+  // Undo: specific field changes
+  const undoChanges = version.changes ?? []
 
   const fullDate = new Date(version.timestamp).toLocaleDateString([], {
     weekday: 'long', month: 'long', day: 'numeric',
@@ -66,20 +72,37 @@ export default function PreviewBanner() {
     <div className="modal-overlay" onClick={() => setShowUndoConfirm(false)}>
       <div className="restore-confirm-modal" onClick={e => e.stopPropagation()}>
         <div className="restore-confirm-header">
-          <h2 className="restore-confirm-title">Undo this change?</h2>
+          <h2 className="restore-confirm-title">Undo "{version.description}"?</h2>
         </div>
         <div className="restore-confirm-body">
           <p className="restore-confirm-lead">
-            This will undo <strong>{version.description}</strong> and revert the affected fields to their previous values.
+            {undoChanges.length === 1
+              ? <><strong>{fieldLabel(undoChanges[0].field)}</strong> will go back to its previous value.</>
+              : <><strong>{undoChanges.length} fields</strong> will go back to their previous values.</>
+            }
           </p>
+          {undoChanges.length > 0 && (
+            <div className="restore-confirm-impact">
+              <div className="restore-confirm-impact-title">Fields that will be reverted</div>
+              <ul className="restore-confirm-impact-list">
+                {undoChanges.map((c, i) => (
+                  <li key={i}>
+                    <span className="modal-field-name">{fieldLabel(c.field)}</span>
+                    <span className="modal-field-arrow"> → </span>
+                    <span className="modal-field-prev">{formatFieldValue(c.field, c.oldValue)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <p className="restore-confirm-note">
-            This action will be logged in the activity log. You can redo it at any time.
+            This will be recorded in the activity log. You can restore this change at any time.
           </p>
         </div>
         <div className="restore-confirm-footer">
-          <button className="modal-btn" onClick={() => setShowUndoConfirm(false)}>Cancel</button>
+          <button className="modal-btn" onClick={() => setShowUndoConfirm(false)}>Keep change</button>
           <button className="modal-btn primary" onClick={handleConfirmUndo}>
-            Undo this change
+            Undo
           </button>
         </div>
       </div>
@@ -91,43 +114,49 @@ export default function PreviewBanner() {
     <div className="modal-overlay" onClick={() => setShowConfirm(false)}>
       <div className="restore-confirm-modal" onClick={e => e.stopPropagation()}>
         <div className="restore-confirm-header">
-          <h2 className="restore-confirm-title">Restore to this version?</h2>
+          <h2 className="restore-confirm-title">Restore to "{version.description}"?</h2>
         </div>
 
         <div className="restore-confirm-body">
+          {/* Version being restored to */}
+          <div className="restore-confirm-target">
+            <div className="restore-confirm-target-label">Restoring to</div>
+            <div className="restore-confirm-target-card">
+              <span className="restore-confirm-target-name">{version.description}</span>
+              <span className="restore-confirm-target-meta">{fullDate} at {fullTime} · {version.author}</span>
+            </div>
+          </div>
+
           <p className="restore-confirm-lead">
-            Your return will go back to how it looked on{' '}
-            <strong>{fullDate} at {fullTime}</strong>.{' '}
-            {versionsAfter.length > 0 && (
-              <>All work from <strong>{workSpan}</strong> will be undone.</>
-            )}
+            {impactedVersions.length > 0
+              ? <>{impactedVersions.length === 1 ? '1 change' : `${impactedVersions.length} changes`} made since this version will be lost.</>
+              : <>The return will go back to how it looked at this point. No changes will be lost.</>
+            }
           </p>
 
-          {versionsAfter.length > 0 && (
+          {impactedVersions.length > 0 && (
             <div className="restore-confirm-impact">
-              <div className="restore-confirm-impact-title">What will be undone</div>
+              <div className="restore-confirm-impact-title">Changes that will be lost</div>
               <ul className="restore-confirm-impact-list">
-                {versionsAfter.slice().reverse().map((v, i) => (
-                  <li key={i}>{v.description}</li>
+                {impactedVersions.slice().reverse().map((v, i) => (
+                  <li key={i}>
+                    <span>{v.description}</span>
+                    <span className="modal-field-meta">{formatTimestamp(v.timestamp)} · {v.author}</span>
+                  </li>
                 ))}
               </ul>
-              {changesAfterCount > 0 && (
-                <p className="restore-confirm-field-count">
-                  {changesAfterCount} field {changesAfterCount === 1 ? 'value' : 'values'} will be overwritten.
-                </p>
-              )}
             </div>
           )}
 
           <p className="restore-confirm-note">
-            The current version will remain in the activity log. You can restore back to it at any time.
+            The activity log will keep a record of this. You can restore to any version at any time.
           </p>
         </div>
 
         <div className="restore-confirm-footer">
-          <button className="modal-btn" onClick={() => setShowConfirm(false)}>Cancel</button>
+          <button className="modal-btn" onClick={() => setShowConfirm(false)}>Keep current</button>
           <button className="modal-btn primary" onClick={handleConfirmRestore}>
-            Restore version
+            Restore
           </button>
         </div>
       </div>

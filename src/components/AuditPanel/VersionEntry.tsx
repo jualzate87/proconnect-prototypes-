@@ -16,6 +16,11 @@ const CHANGE_TYPE_LABELS: Record<string, string> = {
   copy:            'Copy',
 }
 
+function getTypeLabel(version: Version): string {
+  if (version.changeType === 'revert' && version.label.startsWith('Undid:')) return 'Undo'
+  return CHANGE_TYPE_LABELS[version.changeType] || version.changeType
+}
+
 function getSectionSummary(fields: string[]): Array<{ name: string; count: number }> {
   const sections: Record<string, number> = {}
   for (const f of fields) {
@@ -26,6 +31,12 @@ function getSectionSummary(fields: string[]): Array<{ name: string; count: numbe
     name: SECTION_DISPLAY[key] || key,
     count,
   }))
+}
+
+function formatTimestamp(ts: number): string {
+  return new Date(ts).toLocaleDateString([], {
+    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+  })
 }
 
 function formatTime(timestamp: number): string {
@@ -59,6 +70,18 @@ export default function VersionEntry({ version }: VersionEntryProps) {
   const isCurrent    = version.id === auditLog.currentVersionId
   const isPreviewing = previewVersionId === version.id
 
+  // Highlight source entry on hover of this restore/undo card
+  const handleSourceHoverOn  = () => {
+    if (!version.sourceVersionId) return
+    document.querySelector(`[data-version-id="${version.sourceVersionId}"]`)
+      ?.classList.add('version-entry--source-target')
+  }
+  const handleSourceHoverOff = () => {
+    if (!version.sourceVersionId) return
+    document.querySelector(`[data-version-id="${version.sourceVersionId}"]`)
+      ?.classList.remove('version-entry--source-target')
+  }
+
   const [showMenu, setShowMenu]                   = useState(false)
   const [showRestoreConfirm, setShowRestoreConfirm] = useState(false)
   const [showUndoConfirm, setShowUndoConfirm]     = useState(false)
@@ -88,7 +111,7 @@ export default function VersionEntry({ version }: VersionEntryProps) {
   }, [showRestoreConfirm, showUndoConfirm])
 
   const typeColor = getChangeTypeColor(version.changeType)
-  const typeLabel = CHANGE_TYPE_LABELS[version.changeType] || version.changeType
+  const typeLabel = getTypeLabel(version)
 
   const hasRelated = (version.relatedFields?.length ?? 0) > 0
   const hasChanges = (version.changes?.length ?? 0) > 0
@@ -105,36 +128,60 @@ export default function VersionEntry({ version }: VersionEntryProps) {
   const handleConfirmRestore = () => { revertToVersion(version.id); setShowRestoreConfirm(false) }
   const handleConfirmUndo  = () => { undoChange(version.id); setShowUndoConfirm(false) }
 
+  // ── Source version lookup (for revert/undo entries) ──────────────────────
+  const sourceVersion = version.sourceVersionId
+    ? auditLog.versions.find(v => v.id === version.sourceVersionId)
+    : null
+
   // ── Restore confirm: compute impact ──────────────────────────────────────
-  const versionIndex  = auditLog.versions.findIndex(v => v.id === version.id)
-  const versionsAfter = versionIndex >= 0 ? auditLog.versions.slice(versionIndex + 1) : []
+  // All entries with a later timestamp — sorted newest first for display
+  const versionsAfter = auditLog.versions
+    .filter(v => v.timestamp > version.timestamp)
+    .sort((a, b) => b.timestamp - a.timestamp)
   const workSpan      = formatWorkSpan(version.timestamp)
 
   const versionDate = new Date(version.timestamp)
   const fullDate = versionDate.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })
   const fullTime = versionDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
+  // Sections touched by THIS entry (used in undo modal)
+  const thisSections = [...new Set((version.relatedFields ?? []).map(f => f.split('.')[0]))]
+    .map(key => SECTION_DISPLAY[key] || key)
+
+  // For restore: ALL entries after this point in time are lost
+  const impactedVersions = versionsAfter
+
   // ── Undo confirm modal ────────────────────────────────────────────────────
   const undoConfirmModal = showUndoConfirm && canUndo && createPortal(
     <div className="modal-overlay" onClick={() => setShowUndoConfirm(false)}>
       <div className="restore-confirm-modal" onClick={e => e.stopPropagation()}>
         <div className="restore-confirm-header">
-          <h2 className="restore-confirm-title">Undo this change?</h2>
+          <h2 className="restore-confirm-title">Undo "{version.description}"?</h2>
         </div>
 
         <div className="restore-confirm-body">
           <p className="restore-confirm-lead">
-            This will undo <strong>{version.description}</strong> and revert the affected fields to their previous values.
+            The affected values will go back to how they were before this change.
           </p>
+
+          {thisSections.length > 0 && (
+            <div className="restore-confirm-impact">
+              <div className="restore-confirm-impact-title">Sections affected</div>
+              <ul className="restore-confirm-impact-list">
+                {thisSections.map((s, i) => <li key={i}>{s}</li>)}
+              </ul>
+            </div>
+          )}
+
           <p className="restore-confirm-note">
-            This action will be logged in the activity log. You can redo it at any time.
+            This will be recorded in the activity log. You can restore this change at any time.
           </p>
         </div>
 
         <div className="restore-confirm-footer">
-          <button className="modal-btn" onClick={() => setShowUndoConfirm(false)}>Cancel</button>
+          <button className="modal-btn" onClick={() => setShowUndoConfirm(false)}>Keep change</button>
           <button className="modal-btn primary" onClick={handleConfirmUndo}>
-            Undo this change
+            Undo
           </button>
         </div>
       </div>
@@ -147,38 +194,48 @@ export default function VersionEntry({ version }: VersionEntryProps) {
     <div className="modal-overlay" onClick={() => setShowRestoreConfirm(false)}>
       <div className="restore-confirm-modal" onClick={e => e.stopPropagation()}>
         <div className="restore-confirm-header">
-          <h2 className="restore-confirm-title">Restore to this version?</h2>
+          <h2 className="restore-confirm-title">Restore to "{version.description}"?</h2>
         </div>
 
         <div className="restore-confirm-body">
+          <div className="restore-confirm-target">
+            <div className="restore-confirm-target-label">Restoring to</div>
+            <div className="restore-confirm-target-card">
+              <span className="restore-confirm-target-name">{version.description}</span>
+              <span className="restore-confirm-target-meta">{fullDate} at {fullTime} · {version.author}</span>
+            </div>
+          </div>
+
           <p className="restore-confirm-lead">
-            Your return will go back to how it looked on{' '}
-            <strong>{fullDate} at {fullTime}</strong>.{' '}
-            {versionsAfter.length > 0 && (
-              <>All work from <strong>{workSpan}</strong> will be undone.</>
-            )}
+            {impactedVersions.length > 0
+              ? <>{impactedVersions.length === 1 ? '1 change' : `${impactedVersions.length} changes`} made since this version will be lost.</>
+              : <>The return will go back to how it looked at this point. No changes will be lost.</>
+            }
           </p>
 
-          {versionsAfter.length > 0 && (
+          {impactedVersions.length > 0 && (
             <div className="restore-confirm-impact">
-              <div className="restore-confirm-impact-title">What will be undone</div>
+              <div className="restore-confirm-impact-title">Changes that will be lost</div>
               <ul className="restore-confirm-impact-list">
-                {versionsAfter.slice().reverse().map((v, i) => (
-                  <li key={i}>{v.description}</li>
+                {impactedVersions.slice().reverse().map((v, i) => (
+                  <li key={i}>
+                    <span className="modal-impact-desc">{v.description}</span>
+                    <span className="modal-field-meta">{formatTimestamp(v.timestamp)} · {v.author}</span>
+                  </li>
                 ))}
               </ul>
             </div>
           )}
 
           <p className="restore-confirm-note">
-            The current version will remain in the activity log. You can restore back to it at any time.
+            The activity log will keep a record of this. You can restore to any version at any time.
           </p>
         </div>
 
         <div className="restore-confirm-footer">
-          <button className="modal-btn" onClick={() => setShowRestoreConfirm(false)}>Cancel</button>
+          <button className="modal-btn" onClick={() => setShowRestoreConfirm(false)}>Keep current</button>
           <button className="modal-btn primary" onClick={handleConfirmRestore}>
-            Restore version
+            Restore
           </button>
         </div>
       </div>
@@ -189,11 +246,14 @@ export default function VersionEntry({ version }: VersionEntryProps) {
   return (
     <>
       <div
+        data-version-id={version.id}
         className={[
           'version-entry',
-          isCurrent && !isPreviewing ? 'version-entry--current'   : '',
+          isCurrent && !isPreviewing ? 'version-entry--current'    : '',
           isPreviewing               ? 'version-entry--previewing' : '',
         ].filter(Boolean).join(' ')}
+        onMouseEnter={handleSourceHoverOn}
+        onMouseLeave={handleSourceHoverOff}
       >
         <div className="entry-dot" style={{ background: typeColor }} />
 
@@ -244,6 +304,19 @@ export default function VersionEntry({ version }: VersionEntryProps) {
               )}
             </div>
           </div>
+
+          {sourceVersion && (
+            <div className="entry-source-ref">
+              <svg viewBox="0 0 12 12" fill="none" width="11" height="11" aria-hidden="true">
+                <path d="M2.5 6a3.5 3.5 0 103.5-3.5H3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                <path d="M3 4L1 6l2 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <span>{sourceVersion.description.split(' · ')[0]}</span>
+              <span className="entry-source-ref-time">
+                · {formatTime(sourceVersion.timestamp)}
+              </span>
+            </div>
+          )}
 
           <div className="entry-meta">
             <span
