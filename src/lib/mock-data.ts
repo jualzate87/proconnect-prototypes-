@@ -7,15 +7,17 @@ const DAY  = 86400000
 
 // ── Change-type color palette (not author-based) ──────────────────────────────
 export const CHANGE_TYPE_COLORS: Record<string, string> = {
-  manual_entry:    '#2563eb', // blue
-  document_import: '#16a34a', // green
-  api_import:      '#7c3aed', // violet
-  revert:          '#d97706', // amber
-  copy:            '#6b7280', // gray
+  manual_entry:    '#5d686f', // neutral gray
+  document_import: '#5d686f', // neutral gray
+  api_import:      '#5d686f', // neutral gray
+  revert:          '#c2600a', // warm orange — restore is consequential
+  undo:            '#475569', // slate — directional, not alarming
+  copy:            '#5d686f', // neutral gray
 }
 
-export function getChangeTypeColor(changeType: string): string {
-  return CHANGE_TYPE_COLORS[changeType] || '#6b7280'
+export function getChangeTypeColor(changeType: string, isUndo = false): string {
+  if (changeType === 'revert' && isUndo) return CHANGE_TYPE_COLORS['undo']
+  return CHANGE_TYPE_COLORS[changeType] || '#5d686f'
 }
 
 // ── Human-readable field labels for diff view ─────────────────────────────────

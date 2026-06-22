@@ -48,15 +48,15 @@ function formatTime(timestamp: number): string {
   return date.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ', ' + time
 }
 
-function formatWorkSpan(fromTimestamp: number): string {
-  const ms = Date.now() - fromTimestamp
-  const minutes = Math.round(ms / 60000)
-  const hours   = Math.round(ms / 3600000)
-  const days    = Math.round(ms / 86400000)
-  if (minutes < 60)  return `the past ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`
-  if (hours < 24)    return `the past ${hours} ${hours === 1 ? 'hour' : 'hours'}`
-  return `the past ${days} ${days === 1 ? 'day' : 'days'}`
-}
+// function formatWorkSpan(fromTimestamp: number): string {
+//   const ms = Date.now() - fromTimestamp
+//   const minutes = Math.round(ms / 60000)
+//   const hours   = Math.round(ms / 3600000)
+//   const days    = Math.round(ms / 86400000)
+//   if (minutes < 60)  return `the past ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`
+//   if (hours < 24)    return `the past ${hours} ${hours === 1 ? 'hour' : 'hours'}`
+//   return `the past ${days} ${days === 1 ? 'day' : 'days'}`
+// } // reserved for future use
 
 export default function VersionEntry({ version }: VersionEntryProps) {
   const {
@@ -110,7 +110,8 @@ export default function VersionEntry({ version }: VersionEntryProps) {
     return () => document.removeEventListener('keydown', handler)
   }, [showRestoreConfirm, showUndoConfirm])
 
-  const typeColor = getChangeTypeColor(version.changeType)
+  const isUndo    = version.changeType === 'revert' && version.label.startsWith('Undid:')
+  const typeColor = getChangeTypeColor(version.changeType, isUndo)
   const typeLabel = getTypeLabel(version)
 
   const hasRelated = (version.relatedFields?.length ?? 0) > 0
@@ -138,7 +139,7 @@ export default function VersionEntry({ version }: VersionEntryProps) {
   const versionsAfter = auditLog.versions
     .filter(v => v.timestamp > version.timestamp)
     .sort((a, b) => b.timestamp - a.timestamp)
-  const workSpan      = formatWorkSpan(version.timestamp)
+  // const workSpan   = formatWorkSpan(version.timestamp) // reserved for future use
 
   const versionDate = new Date(version.timestamp)
   const fullDate = versionDate.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })

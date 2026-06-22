@@ -10,15 +10,15 @@ function formatTimestamp(ts: number): string {
   })
 }
 
-function formatWorkSpan(fromTimestamp: number): string {
-  const ms = Date.now() - fromTimestamp
-  const minutes = Math.round(ms / 60000)
-  const hours   = Math.round(ms / 3600000)
-  const days    = Math.round(ms / 86400000)
-  if (minutes < 60) return `the past ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`
-  if (hours < 24)   return `the past ${hours} ${hours === 1 ? 'hour' : 'hours'}`
-  return `the past ${days} ${days === 1 ? 'day' : 'days'}`
-}
+// function formatWorkSpan(fromTimestamp: number): string {
+//   const ms = Date.now() - fromTimestamp
+//   const minutes = Math.round(ms / 60000)
+//   const hours   = Math.round(ms / 3600000)
+//   const days    = Math.round(ms / 86400000)
+//   if (minutes < 60) return `the past ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`
+//   if (hours < 24)   return `the past ${hours} ${hours === 1 ? 'hour' : 'hours'}`
+//   return `the past ${days} ${days === 1 ? 'day' : 'days'}`
+// } // reserved for future use
 
 export default function PreviewBanner() {
   const { auditLog, previewVersionId, getVersionById, previewVersion, revertToVersion, undoChange } = useAppContext()
@@ -39,7 +39,7 @@ export default function PreviewBanner() {
   if (!version) return null
 
   // Compute impact
-  const workSpan = formatWorkSpan(version.timestamp)
+  // const workSpan = formatWorkSpan(version.timestamp) // reserved for future use
 
   // All entries with a later timestamp — sorted newest first for display
   const impactedVersions = auditLog.versions

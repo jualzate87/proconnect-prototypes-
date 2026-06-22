@@ -267,11 +267,32 @@
 .activity-group { display: flex; flex-direction: column; }
 
 .activity-group-label {
-  padding: 16px 16px 4px;
-  font-size: var(--font-size-md);
-  font-weight: 400;
+  padding: 16px 16px 24px;
+  font-size: 16px;
+  font-weight: 500;
   color: var(--text-primary);
   background: var(--bg-white);
+}
+
+/* ─── Show older button ─── */
+.version-list-show-older {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 20px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--action-primary);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: background 0.12s;
+}
+.version-list-show-older:hover {
+  background: var(--bg-hover);
 }
 
 /* ─── Entry ─── */
@@ -454,7 +475,7 @@
   font-size: 11px;
   font-weight: 500;
   color: var(--text-secondary);
-  background: var(--bg-page);
+  background: var(--bg-white);
   border: 1px solid var(--border);
   border-radius: 4px;
   padding: 2px 7px;
@@ -490,6 +511,38 @@
   background: var(--primary-light);
   padding: 1px 7px;
   border-radius: 8px;
+}
+
+/* ─── Source-target highlight — entry that was restored from ─── */
+.version-entry--source-target {
+  background: #f5f7fa;
+  border-left: 3px solid #c5d0dc;
+}
+.version-entry--source-target:hover { background: #edf0f5; }
+
+/* ─── Source reference chip (on revert/undo entries) ─── */
+.entry-source-ref {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 5px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  line-height: 1.3;
+}
+.entry-source-ref svg {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+.entry-source-ref span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+.entry-source-ref-time {
+  flex-shrink: 0;
+  max-width: none !important;
 }
 
 /* ─── Entry footer row (section chips + View changes toggle) ─── */
@@ -824,17 +877,27 @@
 
 .restore-confirm-impact-list {
   margin: 0;
-  padding: 10px 16px 10px 36px;
-  list-style: disc;
+  padding: 0;
+  list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 6px;
 }
 
 .restore-confirm-impact-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   font-size: 14px;
   color: #393a3d;
-  line-height: 1.5;
+  line-height: 1.4;
+  padding: 8px 16px;
+  border-top: 1px solid #e8ecef;
+}
+.restore-confirm-impact-list li:first-child { border-top: none; }
+
+.modal-impact-desc {
+  font-weight: 500;
+  color: #21262a;
 }
 
 .restore-confirm-more {
@@ -1004,5 +1067,66 @@
   background: #205ea3;
   color: #ffffff;
   border-color: #205ea3;
+}
+.modal-btn.primary:hover { background: #174d8a; border-color: #174d8a; }
+
+/* ─── Restore target card ─── */
+.restore-confirm-target {
+  margin-bottom: 16px;
+}
+
+.restore-confirm-target-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #5d686f;
+  margin-bottom: 6px;
+}
+
+.restore-confirm-target-card {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 14px;
+  background: #f0f4f6;
+  border: 1px solid #c3ced5;
+  border-left: 3px solid #205ea3;
+  border-radius: 4px;
+}
+
+.restore-confirm-target-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #21262a;
+}
+
+.restore-confirm-target-meta {
+  font-size: 12px;
+  color: #5d686f;
+}
+
+/* ─── Field list in undo/restore modals ─── */
+.modal-field-name {
+  font-weight: 600;
+  color: #21262a;
+}
+
+.modal-field-arrow {
+  color: #5d686f;
+  font-size: 12px;
+}
+
+.modal-field-prev {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  color: #205ea3;
+}
+
+.modal-field-meta {
+  display: block;
+  font-size: 12px;
+  color: #5d686f;
+  margin-top: 1px;
 }
 .modal-btn.primary:hover { background: #1a4e8a; border-color: #1a4e8a; }
