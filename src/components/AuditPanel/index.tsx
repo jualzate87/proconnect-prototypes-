@@ -1,7 +1,6 @@
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useAppContext } from '../../index'
-import ActivityList from './VersionList'
 import SectionList from './SectionList'
 import Filters from './Filters'
 import { SECTION_DISPLAY } from '../../lib/mock-data'
@@ -11,46 +10,98 @@ interface AuditPanelProps {
   onClose: () => void
 }
 
-function exportCSV(versions: ReturnType<ReturnType<typeof useAppContext>['getVisibleVersions']>) {
+type ExportMode = 'chronological' | 'by_section'
+
+function exportCSV(
+  versions: ReturnType<ReturnType<typeof useAppContext>['getVisibleVersions']>,
+  mode: ExportMode
+) {
   const LABELS: Record<string, string> = {
     manual_entry: 'Manual', document_import: 'Document import',
     api_import: 'API', revert: 'Restore', copy: 'Copy',
   }
-  const rows = [
-    ['Date', 'Time', 'Author', 'Activity type', 'Description', 'Section(s)', 'API source'],
-    ...versions.map(v => {
-      const d = new Date(v.timestamp)
-      const sections = [...new Set((v.relatedFields || []).map(f => {
-        const key = f.split('.')[0]
-        return SECTION_DISPLAY[key] || key
-      }))].join(' | ')
-      return [
-        d.toLocaleDateString(),
-        d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        v.author,
-        LABELS[v.changeType] || v.changeType,
-        v.description,
-        sections,
-        v.apiSource || '',
-      ]
-    }),
-  ]
+
+  const getSections = (v: (typeof versions)[number]) =>
+    [...new Set((v.relatedFields || []).map(f => {
+      const key = f.split('.')[0]
+      return SECTION_DISPLAY[key] || key
+    }))].join(' | ')
+
+  let rows: string[][]
+
+  if (mode === 'chronological') {
+    rows = [
+      ['Date', 'Time', 'Author', 'Activity type', 'Description', 'Section(s)', 'API source'],
+      ...versions.map(v => {
+        const d = new Date(v.timestamp)
+        return [
+          d.toLocaleDateString(),
+          d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          v.author,
+          LABELS[v.changeType] || v.changeType,
+          v.description,
+          getSections(v),
+          v.apiSource || '',
+        ]
+      }),
+    ]
+  } else {
+    // Group by section
+    const sectionMap: Record<string, typeof versions> = {}
+    for (const v of versions) {
+      const keys = [...new Set((v.relatedFields || []).map(f => f.split('.')[0]))]
+      if (keys.length === 0) {
+        sectionMap['other'] = sectionMap['other'] || []
+        sectionMap['other'].push(v)
+      } else {
+        for (const key of keys) {
+          sectionMap[key] = sectionMap[key] || []
+          if (!sectionMap[key].includes(v)) sectionMap[key].push(v)
+        }
+      }
+    }
+    rows = [['Section', 'Date', 'Time', 'Author', 'Activity type', 'Description', 'API source']]
+    for (const [key, sectionVersions] of Object.entries(sectionMap)) {
+      const name = SECTION_DISPLAY[key] || key
+      for (const v of sectionVersions.sort((a, b) => b.timestamp - a.timestamp)) {
+        const d = new Date(v.timestamp)
+        rows.push([
+          name,
+          d.toLocaleDateString(),
+          d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          v.author,
+          LABELS[v.changeType] || v.changeType,
+          v.description,
+          v.apiSource || '',
+        ])
+      }
+    }
+  }
+
   const csv = rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n')
   const blob = new Blob([csv], { type: 'text/csv' })
   const url  = URL.createObjectURL(blob)
   const a    = document.createElement('a')
   a.href     = url
-  a.download = `activity-log-${new Date().toISOString().slice(0, 10)}.csv`
+  a.download = `activity-log-${mode}-${new Date().toISOString().slice(0, 10)}.csv`
   a.click()
   URL.revokeObjectURL(url)
 }
 
-type ViewMode = 'section' | 'chronological'
-
 export default function AuditPanel({ onClose }: AuditPanelProps) {
   const { getVisibleVersions } = useAppContext()
   const versions = getVisibleVersions()
-  const [viewMode, setViewMode] = useState<ViewMode>('section')
+  const [exportOpen, setExportOpen] = useState(false)
+  const exportRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!exportOpen) return
+    const handler = (e: MouseEvent) => {
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) setExportOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [exportOpen])
 
   return (
     <div className="audit-panel">
@@ -64,37 +115,47 @@ export default function AuditPanel({ onClose }: AuditPanelProps) {
         </button>
       </div>
 
-      {/* View toggle */}
-      <div className="audit-view-toggle">
-        <button
-          className={`audit-view-btn${viewMode === 'section' ? ' audit-view-btn--active' : ''}`}
-          onClick={() => setViewMode('section')}
-        >
-          By section
-        </button>
-        <button
-          className={`audit-view-btn${viewMode === 'chronological' ? ' audit-view-btn--active' : ''}`}
-          onClick={() => setViewMode('chronological')}
-        >
-          Chronological
-        </button>
-      </div>
-
       {/* Export toolbar */}
       <div className="audit-export-bar">
         <span className="audit-export-label">{versions.length} entries</span>
         <div className="audit-export-actions">
-          <button
-            className="audit-export-btn"
-            onClick={() => exportCSV(versions)}
-            title="Download as CSV"
-          >
-            <svg viewBox="0 0 16 16" fill="none" width="14" height="14">
-              <path d="M8 2v8M5 7l3 3 3-3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M3 12h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-            </svg>
-            Export CSV
-          </button>
+          {/* Export dropdown */}
+          <div className="export-dropdown-wrap" ref={exportRef}>
+            <button
+              className="audit-export-btn"
+              onClick={() => setExportOpen(o => !o)}
+              title="Export activity log"
+            >
+              <svg viewBox="0 0 16 16" fill="none" width="14" height="14">
+                <path d="M8 2v8M5 7l3 3 3-3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M3 12h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+              </svg>
+              Export CSV
+              <svg viewBox="0 0 10 6" fill="none" width="9" height="9">
+                <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            {exportOpen && (
+              <div className="export-dropdown">
+                <button className="export-dropdown-item" onClick={() => { exportCSV(versions, 'by_section'); setExportOpen(false) }}>
+                  <svg viewBox="0 0 14 14" fill="none" width="13" height="13">
+                    <rect x="1" y="2" width="12" height="2.5" rx="1" fill="currentColor" opacity=".3"/>
+                    <rect x="3" y="6" width="10" height="1.5" rx=".75" fill="currentColor"/>
+                    <rect x="3" y="9.5" width="10" height="1.5" rx=".75" fill="currentColor"/>
+                  </svg>
+                  Export by section
+                </button>
+                <button className="export-dropdown-item" onClick={() => { exportCSV(versions, 'chronological'); setExportOpen(false) }}>
+                  <svg viewBox="0 0 14 14" fill="none" width="13" height="13">
+                    <path d="M7 2v4l2.5 2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                    <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.3"/>
+                  </svg>
+                  Export chronologically
+                </button>
+              </div>
+            )}
+          </div>
+
           <button
             className="audit-export-btn"
             onClick={() => window.print()}
@@ -114,12 +175,10 @@ export default function AuditPanel({ onClose }: AuditPanelProps) {
       {/* Filters */}
       <Filters />
 
-      {/* Content */}
+      {/* Section list — always section view at first level */}
       <div className="audit-panel-content">
         {versions.length > 0 ? (
-          viewMode === 'section'
-            ? <SectionList versions={versions} />
-            : <ActivityList versions={versions} />
+          <SectionList versions={versions} />
         ) : (
           <div className="empty-state">
             <svg viewBox="0 0 40 40" fill="none" width="36" height="36" style={{ marginBottom: 10 }}>

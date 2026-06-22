@@ -50,15 +50,13 @@ export default function Filters() {
     let dateFrom: number | undefined
     let dateTo:   number | undefined
 
-    if (val === 'today')     { dateFrom = todayMs }
-    else if (val === 'yesterday') { dateFrom = todayMs - DAY;       dateTo = todayMs - 1 }
-    else if (val === '7d')        { dateFrom = todayMs - 7  * DAY;  dateTo = todayMs - 2 * DAY - 1 }
-    else if (val === '30d')       { dateFrom = todayMs - 30 * DAY;  dateTo = todayMs - 7 * DAY - 1 }
-    else if (val === '90d')       { dateFrom = todayMs - 90 * DAY;  dateTo = todayMs - 30 * DAY - 1 }
-    else if (val === 'this_year') {
-      dateFrom = new Date(now.getFullYear(), 0, 1).getTime()
-      dateTo   = todayMs - 90 * DAY - 1
-    } else if (val === 'last_year') {
+    if (val === 'today')          { dateFrom = todayMs }
+    else if (val === 'yesterday') { dateFrom = todayMs - DAY;        dateTo = todayMs - 1 }
+    else if (val === '7d')        { dateFrom = todayMs - 7  * DAY }
+    else if (val === '30d')       { dateFrom = todayMs - 30 * DAY }
+    else if (val === '90d')       { dateFrom = todayMs - 90 * DAY }
+    else if (val === 'this_year') { dateFrom = new Date(now.getFullYear(), 0, 1).getTime() }
+    else if (val === 'last_year') {
       dateFrom = new Date(now.getFullYear() - 1, 0, 1).getTime()
       dateTo   = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59, 999).getTime()
     }
