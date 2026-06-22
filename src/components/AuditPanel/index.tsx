@@ -1,6 +1,8 @@
 
+import { useState } from 'react'
 import { useAppContext } from '../../index'
 import ActivityList from './VersionList'
+import SectionList from './SectionList'
 import Filters from './Filters'
 import { SECTION_DISPLAY } from '../../lib/mock-data'
 import '../../styles/audit-panel.css'
@@ -43,9 +45,12 @@ function exportCSV(versions: ReturnType<ReturnType<typeof useAppContext>['getVis
   URL.revokeObjectURL(url)
 }
 
+type ViewMode = 'section' | 'chronological'
+
 export default function AuditPanel({ onClose }: AuditPanelProps) {
   const { getVisibleVersions } = useAppContext()
   const versions = getVisibleVersions()
+  const [viewMode, setViewMode] = useState<ViewMode>('section')
 
   return (
     <div className="audit-panel">
@@ -59,7 +64,23 @@ export default function AuditPanel({ onClose }: AuditPanelProps) {
         </button>
       </div>
 
-      {/* Export toolbar — below header */}
+      {/* View toggle */}
+      <div className="audit-view-toggle">
+        <button
+          className={`audit-view-btn${viewMode === 'section' ? ' audit-view-btn--active' : ''}`}
+          onClick={() => setViewMode('section')}
+        >
+          By section
+        </button>
+        <button
+          className={`audit-view-btn${viewMode === 'chronological' ? ' audit-view-btn--active' : ''}`}
+          onClick={() => setViewMode('chronological')}
+        >
+          Chronological
+        </button>
+      </div>
+
+      {/* Export toolbar */}
       <div className="audit-export-bar">
         <span className="audit-export-label">{versions.length} entries</span>
         <div className="audit-export-actions">
@@ -93,10 +114,12 @@ export default function AuditPanel({ onClose }: AuditPanelProps) {
       {/* Filters */}
       <Filters />
 
-      {/* Activity list */}
+      {/* Content */}
       <div className="audit-panel-content">
         {versions.length > 0 ? (
-          <ActivityList versions={versions} />
+          viewMode === 'section'
+            ? <SectionList versions={versions} />
+            : <ActivityList versions={versions} />
         ) : (
           <div className="empty-state">
             <svg viewBox="0 0 40 40" fill="none" width="36" height="36" style={{ marginBottom: 10 }}>
