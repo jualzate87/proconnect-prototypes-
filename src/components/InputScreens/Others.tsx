@@ -23,7 +23,7 @@ export default function Others() {
   const netRental = (other.rentalIncome || 0) - (other.rentalExpenses || 0)
 
   return (
-    <div className="screen">
+    <div className={`screen${isPreview ? ' screen--preview' : ''}`}>
       <div className="screen-title-row">
         <h1 className="screen-title">Details: Rental, Royalty &amp; Passive Income (Schedule E)</h1>
       </div>

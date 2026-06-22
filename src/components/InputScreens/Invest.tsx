@@ -1,9 +1,8 @@
-import type { CSSProperties } from 'react'
 import { useAppContext } from '../../index'
 import '../../styles/input-screens.css'
 
 export default function Invest() {
-  const { displayTaxData, updateTaxData, highlightedFields, highlightColor, previewVersionId } = useAppContext()
+  const { displayTaxData, updateTaxData, previewVersionId } = useAppContext()
   const investment = displayTaxData.investment || { capitalGains: 0, shortTermGains: 0, stockSales: '', notes: '' }
 
   const isPreview = !!previewVersionId
@@ -15,18 +14,10 @@ export default function Invest() {
     updateTaxData('investment', { ...investment, [field]: parsed })
   }
 
-  const inputStyle = (fieldKey: string): CSSProperties => {
-    const isHighlighted = highlightedFields.includes(`investment.${fieldKey}`)
-    if (!isHighlighted || !highlightColor) return {}
-    return {
-      background: `${highlightColor}1a`,
-      borderColor: highlightColor,
-      boxShadow: `inset 3px 0 0 ${highlightColor}`,
-    }
-  }
+  const inputStyle = (_fieldKey: string) => ({})
 
   return (
-    <div className="screen">
+    <div className={`screen${isPreview ? ' screen--preview' : ''}`}>
       <div className="screen-title-row">
         <h1 className="screen-title">Details: Capital Gains and Losses (Schedule D)</h1>
       </div>

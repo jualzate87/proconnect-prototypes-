@@ -1,12 +1,11 @@
 import { useState } from 'react'
-import type { CSSProperties } from 'react'
 import { useAppContext } from '../../index'
 import '../../styles/input-screens.css'
 
 type PayerTab = 'p1' | 'p2'
 
 export default function Interest() {
-  const { displayTaxData, updateTaxData, highlightedFields, highlightColor, previewVersionId } = useAppContext()
+  const { displayTaxData, updateTaxData, previewVersionId } = useAppContext()
   const [activeTab, setActiveTab] = useState<PayerTab>('p1')
 
   const interest = displayTaxData.interest || {
@@ -25,21 +24,13 @@ export default function Interest() {
     updateTaxData('interest', { ...interest, [field]: parsed })
   }
 
-  const inputStyle = (fieldKey: string): CSSProperties => {
-    const isHighlighted = highlightedFields.includes(`interest.${fieldKey}`)
-    if (!isHighlighted || !highlightColor) return {}
-    return {
-      background: `${highlightColor}1a`,
-      borderColor: highlightColor,
-      boxShadow: `inset 3px 0 0 ${highlightColor}`,
-    }
-  }
+  const inputStyle = (_fieldKey: string) => ({})
 
   const p1Label = interest.p1Name || 'First Federal Savings'
   const p2Label = interest.p2Name || 'Citi Bank'
 
   return (
-    <div className="screen">
+    <div className={`screen${isPreview ? ' screen--preview' : ''}`}>
       <div className="screen-title-row">
         <h1 className="screen-title">Details: Interest & Dividend Income (1099-INT / 1099-DIV)</h1>
       </div>

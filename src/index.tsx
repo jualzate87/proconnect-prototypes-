@@ -1,15 +1,17 @@
-import React, { useState, useContext } from 'react'
+import React, { useState, useContext, useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
 import { AppContext, AppContextType, initializeAppState, createAppStore } from './lib/store'
 import AppLayout from './components/AppLayout'
 import TaxMappingPortal from './components/TaxMapping'
+import TaxAdvisorDemo from './pages/TaxAdvisorDemo'
+import AuditResearch from './pages/AuditResearch'
 import './index.css'
 
-function App() {
+function MainApp() {
   const initialState = initializeAppState()
   const store = createAppStore(initialState)
   const [state, setState] = useState(initialState)
-  const [showTaxMapping, setShowTaxMapping] = useState(false)
+  const [showTaxMapping, setShowTaxMapping] = useState(window.location.hash.includes('guide'))
 
   // Compute display data: show snapshot in preview mode, live data otherwise
   const displayTaxData = state.previewVersionId
@@ -80,6 +82,18 @@ function App() {
       <AppLayout />
     </AppContext.Provider>
   )
+}
+
+function App() {
+  const [route, setRoute] = useState(window.location.hash)
+  useEffect(() => {
+    const handler = () => setRoute(window.location.hash)
+    window.addEventListener('hashchange', handler)
+    return () => window.removeEventListener('hashchange', handler)
+  }, [])
+  if (route === '#/axon') return <TaxAdvisorDemo />
+  if (route === '#/audit-research') return <AuditResearch />
+  return <MainApp />
 }
 
 export function useAppContext() {

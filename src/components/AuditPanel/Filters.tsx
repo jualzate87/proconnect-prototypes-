@@ -1,27 +1,31 @@
 import { useState, useRef, useEffect } from 'react'
 import { useAppContext } from '../../index'
 
+function toDateInputValue(ts: number): string {
+  return new Date(ts).toISOString().slice(0, 10)
+}
+
+function fromDateInputValue(val: string, endOfDay = false): number {
+  const d = new Date(val)
+  if (endOfDay) d.setHours(23, 59, 59, 999)
+  return d.getTime()
+}
+
 export default function Filters() {
   const { filters, setFilters, clearFilters, auditLog } = useAppContext()
   const [dateOpen,     setDateOpen]     = useState(false)
   const [authorOpen,   setAuthorOpen]   = useState(false)
   const [activityOpen, setActivityOpen] = useState(false)
+
+  // Local draft state for date range — only applied on "Apply"
+  const [draftFrom, setDraftFrom] = useState('')
+  const [draftTo,   setDraftTo]   = useState('')
+
   const dateRef     = useRef<HTMLDivElement>(null)
   const authorRef   = useRef<HTMLDivElement>(null)
   const activityRef = useRef<HTMLDivElement>(null)
 
   const authors = Array.from(new Set(auditLog.versions.map(v => v.author))).sort()
-
-  const DATE_OPTIONS = [
-    { label: 'All dates',    value: '' },
-    { label: 'Today',        value: 'today' },
-    { label: 'Yesterday',    value: 'yesterday' },
-    { label: 'Last 7 days',  value: '7d' },
-    { label: 'Last 30 days', value: '30d' },
-    { label: 'Last 90 days', value: '90d' },
-    { label: 'This year',    value: 'this_year' },
-    { label: 'Last year',    value: 'last_year' },
-  ]
 
   const ACTIVITY_OPTIONS = [
     { label: 'All activity',      value: '' },
@@ -29,6 +33,15 @@ export default function Filters() {
     { label: 'Document import',   value: 'document_import' },
     { label: 'API import',        value: 'api_import' },
   ]
+
+  // Sync draft fields when opening the date picker
+  const openDatePicker = () => {
+    setDraftFrom(filters.dateFrom ? toDateInputValue(filters.dateFrom) : '')
+    setDraftTo(filters.dateTo   ? toDateInputValue(filters.dateTo)   : '')
+    setDateOpen(true)
+    setAuthorOpen(false)
+    setActivityOpen(false)
+  }
 
   // Close all dropdowns on outside click
   useEffect(() => {
@@ -41,59 +54,45 @@ export default function Filters() {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  // ── Date pill logic ──────────────────────────────────────────────────────────
-  const selectDate = (val: string) => {
-    const DAY = 86400000
-    const now = new Date()
-    const todayStart = new Date(now); todayStart.setHours(0, 0, 0, 0)
-    const todayMs = todayStart.getTime()
-    let dateFrom: number | undefined
-    let dateTo:   number | undefined
+  const applyDateRange = () => {
+    setFilters({
+      ...filters,
+      dateFrom: draftFrom ? fromDateInputValue(draftFrom)         : undefined,
+      dateTo:   draftTo   ? fromDateInputValue(draftTo, true)     : undefined,
+    })
+    setDateOpen(false)
+  }
 
-    if (val === 'today')          { dateFrom = todayMs }
-    else if (val === 'yesterday') { dateFrom = todayMs - DAY;        dateTo = todayMs - 1 }
-    else if (val === '7d')        { dateFrom = todayMs - 7  * DAY }
-    else if (val === '30d')       { dateFrom = todayMs - 30 * DAY }
-    else if (val === '90d')       { dateFrom = todayMs - 90 * DAY }
-    else if (val === 'this_year') { dateFrom = new Date(now.getFullYear(), 0, 1).getTime() }
-    else if (val === 'last_year') {
-      dateFrom = new Date(now.getFullYear() - 1, 0, 1).getTime()
-      dateTo   = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59, 999).getTime()
-    }
-    setFilters({ ...filters, dateFrom, dateTo })
+  const clearDateRange = () => {
+    setDraftFrom('')
+    setDraftTo('')
+    setFilters({ ...filters, dateFrom: undefined, dateTo: undefined })
     setDateOpen(false)
   }
 
   const activeDateLabel = (() => {
     if (!filters.dateFrom && !filters.dateTo) return null
-    const DAY = 86400000
-    const now = new Date()
-    const todayStart = new Date(now); todayStart.setHours(0, 0, 0, 0)
-    const todayMs = todayStart.getTime()
-    const df = filters.dateFrom!
-    if (df >= todayMs)            return 'Today'
-    if (df >= todayMs - DAY)      return 'Yesterday'
-    if (df >= todayMs - 7  * DAY) return 'Last 7 days'
-    if (df >= todayMs - 30 * DAY) return 'Last 30 days'
-    if (df >= todayMs - 90 * DAY) return 'Last 90 days'
-    if (new Date(df).getFullYear() === now.getFullYear())     return 'This year'
-    if (new Date(df).getFullYear() === now.getFullYear() - 1) return 'Last year'
+    const from = filters.dateFrom ? toDateInputValue(filters.dateFrom) : ''
+    const to   = filters.dateTo   ? toDateInputValue(filters.dateTo)   : ''
+    if (from && to)  return `${from} – ${to}`
+    if (from)        return `From ${from}`
+    if (to)          return `Until ${to}`
     return null
   })()
 
-  // ── Author pill logic ────────────────────────────────────────────────────────
+  // ── Author pill logic ─────────────────────────────────────────────────────
   const selectAuthor = (author: string) => {
     setFilters({ ...filters, author: author || undefined })
     setAuthorOpen(false)
   }
 
-  // ── Activity type pill logic ─────────────────────────────────────────────────
+  // ── Activity type pill logic ──────────────────────────────────────────────
   const selectActivity = (val: string) => {
     setFilters({ ...filters, changeType: val || undefined })
     setActivityOpen(false)
   }
 
-  // ── Search logic ─────────────────────────────────────────────────────────────
+  // ── Search logic ──────────────────────────────────────────────────────────
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFilters({ ...filters, searchQuery: e.target.value || undefined })
   }
@@ -119,7 +118,7 @@ export default function Filters() {
   return (
     <div className="audit-filters">
 
-      {/* ── Search bar — CG Input ── */}
+      {/* ── Search bar ── */}
       <div className="audit-search-wrap">
         <div className="audit-search-inner">
           <svg className="audit-search-icon" viewBox="0 0 14 14" fill="none" width="13" height="13">
@@ -150,30 +149,55 @@ export default function Filters() {
       {/* ── Filter pills row ── */}
       <div className="audit-filter-row">
 
-        {/* Date */}
+        {/* Date range */}
         <div className="filter-pill-wrap" ref={dateRef}>
           <button
             className={`filter-pill${activeDateLabel ? ' filter-pill--active' : ''}`}
-            onClick={() => { setDateOpen(!dateOpen); setAuthorOpen(false); setActivityOpen(false) }}
+            onClick={openDatePicker}
+            title={activeDateLabel || undefined}
           >
-            <span>{activeDateLabel || 'Date'}</span>
+            <svg viewBox="0 0 12 12" fill="none" width="10" height="10" style={{ flexShrink: 0 }}>
+              <rect x="1" y="2" width="10" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.2"/>
+              <path d="M4 1v2M8 1v2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+              <path d="M1 5h10" stroke="currentColor" strokeWidth="1.2"/>
+            </svg>
+            <span className="filter-pill-date-label">
+              {activeDateLabel
+                ? <span className="filter-pill-date-short">{activeDateLabel}</span>
+                : 'Date range'
+              }
+            </span>
             <Chevron />
           </button>
+
           {dateOpen && (
-            <div className="filter-dropdown">
-              {DATE_OPTIONS.map(opt => {
-                const isActive = activeDateLabel === opt.label || (!activeDateLabel && opt.value === '')
-                return (
-                  <button
-                    key={opt.value}
-                    className={`filter-dropdown-item${isActive ? ' active' : ''}`}
-                    onClick={() => selectDate(opt.value)}
-                  >
-                    {isActive && <Check />}
-                    {opt.label}
-                  </button>
-                )
-              })}
+            <div className="filter-dropdown date-range-dropdown">
+              <div className="date-range-fields">
+                <label className="date-range-label">
+                  From
+                  <input
+                    type="date"
+                    className="date-range-input"
+                    value={draftFrom}
+                    max={draftTo || undefined}
+                    onChange={e => setDraftFrom(e.target.value)}
+                  />
+                </label>
+                <label className="date-range-label">
+                  To
+                  <input
+                    type="date"
+                    className="date-range-input"
+                    value={draftTo}
+                    min={draftFrom || undefined}
+                    onChange={e => setDraftTo(e.target.value)}
+                  />
+                </label>
+              </div>
+              <div className="date-range-actions">
+                <button className="date-range-clear" onClick={clearDateRange}>Clear</button>
+                <button className="date-range-apply" onClick={applyDateRange}>Apply</button>
+              </div>
             </div>
           )}
         </div>

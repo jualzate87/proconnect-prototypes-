@@ -1,12 +1,11 @@
 import { useState } from 'react'
-import type { CSSProperties } from 'react'
 import { useAppContext } from '../../index'
 import '../../styles/input-screens.css'
 
 type TabId = 'bing' | 'techcircle'
 
 export default function Income() {
-  const { displayTaxData, updateTaxData, highlightedFields, highlightColor, previewVersionId } = useAppContext()
+  const { displayTaxData, updateTaxData, previewVersionId } = useAppContext()
   const [activeTab, setActiveTab] = useState<TabId>('bing')
 
   const income = displayTaxData.income || {
@@ -32,19 +31,10 @@ export default function Income() {
     updateTaxData('income', { ...income, [field]: parsed })
   }
 
-  // Apply highlight color directly to the input element
-  const inputStyle = (fieldKey: string): CSSProperties => {
-    const isHighlighted = highlightedFields.includes(`income.${fieldKey}`)
-    if (!isHighlighted || !highlightColor) return {}
-    return {
-      background: `${highlightColor}1a`,
-      borderColor: highlightColor,
-      boxShadow: `inset 3px 0 0 ${highlightColor}`,
-    }
-  }
+  const inputStyle = (_fieldKey: string) => ({})
 
   return (
-    <div className="screen">
+    <div className={`screen${isPreview ? ' screen--preview' : ''}`}>
       <div className="screen-title-row">
         <h1 className="screen-title">Details: Wages, Salaries, Tips (W-2)</h1>
       </div>

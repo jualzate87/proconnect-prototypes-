@@ -1,6 +1,9 @@
 
+import { useState } from 'react'
 import { Version } from '../../types'
 import VersionEntry from './VersionEntry'
+
+const PAGE_SIZE = 10
 
 interface ActivityListProps {
   versions: Version[]
@@ -39,10 +42,14 @@ function getTimeGroup(timestamp: number): string {
 }
 
 export default function ActivityList({ versions }: ActivityListProps) {
-  // Group versions by time bucket
-  const groups: Record<string, Version[]> = {}
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
 
-  for (const v of versions) {
+  const visibleVersions = versions.slice(0, visibleCount)
+  const hasMore = visibleCount < versions.length
+
+  // Group visible versions by time bucket
+  const groups: Record<string, Version[]> = {}
+  for (const v of visibleVersions) {
     const group = getTimeGroup(v.timestamp)
     if (!groups[group]) groups[group] = []
     groups[group].push(v)
@@ -60,6 +67,17 @@ export default function ActivityList({ versions }: ActivityListProps) {
           ))}
         </div>
       ))}
+      {hasMore && (
+        <button
+          className="version-list-show-older"
+          onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
+        >
+          Show older
+          <svg viewBox="0 0 10 6" fill="none" width="10" height="10">
+            <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+      )}
     </div>
   )
 }

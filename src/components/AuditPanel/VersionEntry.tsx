@@ -123,11 +123,10 @@ export default function VersionEntry({ version }: VersionEntryProps) {
     version.changeType !== 'copy'
 
   // ── Action menu handlers ──────────────────────────────────────────────────
-  const handlePreview      = () => { previewVersion(version.id); setShowMenu(false) }
-  const handleRevert       = () => { setShowRestoreConfirm(true); setShowMenu(false) }
-  const handleMenuUndo     = () => { setShowUndoConfirm(true); setShowMenu(false) }
+  const handlePreview        = () => { previewVersion(version.id); setShowMenu(false) }
+  const handleRevert         = () => { setShowRestoreConfirm(true); setShowMenu(false) }
   const handleConfirmRestore = () => { revertToVersion(version.id); setShowRestoreConfirm(false) }
-  const handleConfirmUndo  = () => { undoChange(version.id); setShowUndoConfirm(false) }
+  const handleConfirmUndo    = () => { undoChange(version.id); setShowUndoConfirm(false) }
 
   // ── Source version lookup (for revert/undo entries) ──────────────────────
   const sourceVersion = version.sourceVersionId
@@ -158,6 +157,9 @@ export default function VersionEntry({ version }: VersionEntryProps) {
       <div className="restore-confirm-modal" onClick={e => e.stopPropagation()}>
         <div className="restore-confirm-header">
           <h2 className="restore-confirm-title">Undo "{version.description}"?</h2>
+          <button className="restore-confirm-close" onClick={() => setShowUndoConfirm(false)} aria-label="Close">
+            <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+          </button>
         </div>
 
         <div className="restore-confirm-body">
@@ -196,6 +198,9 @@ export default function VersionEntry({ version }: VersionEntryProps) {
       <div className="restore-confirm-modal" onClick={e => e.stopPropagation()}>
         <div className="restore-confirm-header">
           <h2 className="restore-confirm-title">Restore to "{version.description}"?</h2>
+          <button className="restore-confirm-close" onClick={() => setShowRestoreConfirm(false)} aria-label="Close">
+            <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+          </button>
         </div>
 
         <div className="restore-confirm-body">
@@ -277,28 +282,17 @@ export default function VersionEntry({ version }: VersionEntryProps) {
               {showMenu && (
                 <div className="action-menu">
                   <button className="action-menu-item" onClick={handlePreview}>
-                    <svg viewBox="0 0 14 14" fill="none" width="13" height="13">
-                      <ellipse cx="7" cy="7" rx="5.5" ry="3.5" stroke="currentColor" strokeWidth="1.3"/>
-                      <circle cx="7" cy="7" r="1.5" fill="currentColor"/>
-                    </svg>
                     Preview this version
                   </button>
-                  {canUndo && (
-                    <button className="action-menu-item" onClick={handleMenuUndo}>
-                      <svg viewBox="0 0 14 14" fill="none" width="13" height="13">
-                        <path d="M3 7a4 4 0 104-4H4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-                        <path d="M4 5L2 7l2 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      Undo this change
-                    </button>
-                  )}
                   {!isCurrent && (
-                    <button className="action-menu-item" onClick={handleRevert}>
-                      <svg viewBox="0 0 14 14" fill="none" width="13" height="13">
-                        <path d="M3 7a4 4 0 104-4H4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-                        <path d="M4 5L2 7l2 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      Restore this version
+                    <button
+                      className="action-menu-item action-menu-item--with-desc"
+                      onClick={handleRevert}
+                    >
+                      <span className="action-menu-item-body">
+                        <span className="action-menu-item-label">Restore to this version</span>
+                        <span className="action-menu-item-desc">Replaces the entire return with this snapshot.</span>
+                      </span>
                     </button>
                   )}
                 </div>

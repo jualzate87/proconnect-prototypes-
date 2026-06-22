@@ -130,6 +130,19 @@
   transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
 }
 
+/* ─── Preview / read-only mode — DS read-only field appearance ─── */
+/* Applied via .screen--preview on the root wrapper when previewVersionId is set */
+.screen--preview .tax-input-cell input,
+.screen--preview .tax-input-cell textarea {
+  background: var(--bg-page);
+  border-color: var(--divider);
+  color: var(--text-primary);
+  cursor: default;
+  pointer-events: none;
+}
+.screen--preview .tax-input-cell input:focus,
+.screen--preview .tax-input-cell textarea:focus { border-color: var(--divider); box-shadow: none; }
+
 .tax-label {
   flex: 0 0 45%;
   padding: 8px 14px;

@@ -164,10 +164,7 @@ export default function Header() {
               {['EFIN Registration/Update', 'Customize tax return statuses', 'Convert data', 'Pay-by-Refund enrollment', 'Print settings', 'Task Accelerators', 'Client letters', 'Batch actions (Transfer prior year data)', 'SmartLook'].map(item => (
                 <button key={item} className="tm-settings-item">{item}</button>
               ))}
-              <div className="tm-settings-item" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span>Invoice autocomplete</span>
-                <span className="tm-new-badge">NEW</span>
-              </div>
+              <button className="tm-settings-item">Invoice autocomplete</button>
               <hr className="tm-settings-divider" />
               <p className="tm-settings-section-label">Other tools</p>
               <button className="tm-settings-item" onClick={handleTaxMapping} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

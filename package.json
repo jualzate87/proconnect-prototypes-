@@ -6,18 +6,25 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "deploy": "npm run build && gh-pages -d dist"
+    "deploy": "npm run build && gh-pages -d dist",
+    "awm:bootstrap": "is-ci || (appf-webtools-mgr version && appf-webtools-mgr bootstrap) || echo 'Skipping bootstrap since webtools manager is not installed: https://github.intuit.com/pages/UX-Infra/webtools-mgr/docs/getting-started'",
+    "postinstall": "yarn awm:bootstrap"
   },
   "dependencies": {
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@appfabric/dev-environment-generic": "^3.1.1",
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
     "@vitejs/plugin-react": "^4.2.1",
     "gh-pages": "^6.3.0",
+    "is-ci": "3.0.1",
     "typescript": "^5.3.3",
     "vite": "^5.0.8"
+  },
+  "webtoolsManager": {
+    "tools": {}
   }
 }

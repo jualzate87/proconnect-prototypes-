@@ -295,13 +295,19 @@ export function createAppStore(_initialState: AppState) {
         const sourceVersion = state.auditLog.versions.find(v => v.id === versionId)
         if (!sourceVersion) return state
 
+        const sourceDate = new Date(sourceVersion.timestamp)
+        const sourceDateStr = sourceDate.toLocaleDateString([], { month: 'short', day: 'numeric' })
+        const sourceTimeStr = sourceDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+
         const revertVersion = createVersion(
           sourceVersion.dataSnapshot,
           state.taxData,
-          `Restored to "${sourceVersion.label}"`,
+          `Restored to "${sourceVersion.description}" · ${sourceDateStr} at ${sourceTimeStr}`,
           'revert'
         )
         revertVersion.author = 'You'
+        revertVersion.sourceVersionId = versionId
+        revertVersion.relatedFields = sourceVersion.relatedFields
 
         const newAuditLog = {
           ...state.auditLog,
@@ -342,16 +348,21 @@ export function createAppStore(_initialState: AppState) {
           }
         }
 
+        const versionDate = new Date(version.timestamp)
+        const versionDateStr = versionDate.toLocaleDateString([], { month: 'short', day: 'numeric' })
+        const versionTimeStr = versionDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+
         const undoEntry: Version = {
           id: generateVersionId(),
           timestamp: Date.now(),
           author: 'You',
           label: `Undid: ${version.label}`,
           changeType: 'revert',
-          description: `Undid changes from "${version.label}"`,
+          description: `Undid "${version.description}" · ${versionDateStr} at ${versionTimeStr}`,
           dataSnapshot: newData,
           changes: version.changes.map(c => ({ field: c.field, oldValue: c.newValue, newValue: c.oldValue })),
           relatedFields: version.relatedFields,
+          sourceVersionId: versionId,
         }
 
         const newAuditLog = {

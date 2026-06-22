@@ -2,9 +2,28 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { useAppContext } from '../../index'
 import {
   RETURN_TYPES, AGENCIES, SECTIONS, FIELDS, CATEGORY_ORDER,
-  TaxField, TaxSection,
+  TaxField, TaxSection, EnumValue,
 } from './TaxMappingData'
+
 import './TaxMapping.css'
+import TaxMappingGuide from './TaxMappingGuide'
+
+// Column header with tooltip
+function ColHeader({ label, tip }: { label: string; tip: string }) {
+  return (
+    <span className="tm-th-wrap">
+      {label}
+      <span className="tm-th-tooltip-anchor">
+        <svg className="tm-th-info" viewBox="0 0 14 14" fill="none" width="12" height="12">
+          <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.2"/>
+          <path d="M7 6.5v4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+          <circle cx="7" cy="4.5" r="0.7" fill="currentColor"/>
+        </svg>
+        <span className="tm-th-tooltip">{tip}</span>
+      </span>
+    </span>
+  )
+}
 
 interface Props {
   onClose: () => void
@@ -24,9 +43,13 @@ export default function TaxMappingPortal({ onClose }: Props) {
   )
   const [returnTypeOpen, setReturnTypeOpen]   = useState(false)
   const [agencyOpen, setAgencyOpen]           = useState(false)
+  const [showGuide, setShowGuide]             = useState(window.location.hash.includes('guide'))
+  const [downloadOpen, setDownloadOpen]       = useState(false)
+  const [expandedEnumKey, setExpandedEnumKey] = useState<string | null>(null)
 
   const returnTypeRef = useRef<HTMLDivElement>(null)
   const agencyRef     = useRef<HTMLDivElement>(null)
+  const downloadRef   = useRef<HTMLDivElement>(null)
   const searchRef     = useRef<HTMLInputElement>(null)
 
   // Close on Escape
@@ -41,6 +64,7 @@ export default function TaxMappingPortal({ onClose }: Props) {
     function handler(e: MouseEvent) {
       if (returnTypeRef.current && !returnTypeRef.current.contains(e.target as Node)) setReturnTypeOpen(false)
       if (agencyRef.current && !agencyRef.current.contains(e.target as Node)) setAgencyOpen(false)
+      if (downloadRef.current && !downloadRef.current.contains(e.target as Node)) setDownloadOpen(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
@@ -110,19 +134,54 @@ export default function TaxMappingPortal({ onClose }: Props) {
     setTimeout(() => setCopiedId(null), 1500)
   }
 
+  function buildApiKey(f: TaxField): string {
+    const sec = SECTIONS.find(s => s.id === f.sectionId)
+    const series = sec?.seriesId ?? ''
+    const tsj = f.taxpayer === 'Both' ? 'TP' : f.taxpayer
+    return `${series}.1.${f.codeId}.${tsj}`
+  }
+
+  function buildValidValues(f: TaxField): string {
+    if (!f.enumValues?.length) return ''
+    return f.enumValues.map(ev => `${ev.value}=${ev.label}`).join(' | ')
+  }
+
   function buildCsvString(fields: TaxField[]) {
-    const header = showSectionCol
-      ? 'Field Label\tSection\tSeries\tCode ID\tPrefix\tType\tAgency'
-      : 'Field Label\tSeries\tCode ID\tPrefix\tType\tAgency'
+    const header = [
+      'Section',
+      'Series',
+      'Field',
+      'API Key',
+      'Code',
+      'TSJ',
+      'Type',
+      'Suffix',
+      'Char Limit',
+      'Valid Values',
+      'Agency',
+    ].join('\t')
+
     const sectionMap = Object.fromEntries(SECTIONS.map(s => [s.id, s]))
     const rows = fields.map(f => {
       const sec = sectionMap[f.sectionId]
-      const prefix = f.prefix === 'static' ? '1' : '1+'
       const agencyVal = f.scope === 'FEDERAL' ? 'Federal' : AGENCIES.find(a => a.stateCode === f.scope)?.label.replace('Federal + ', '') ?? f.scope
-      if (showSectionCol) {
-        return [f.label, sec?.label ?? '', sec?.seriesId ?? '', f.codeId, prefix, f.type, agencyVal].join('\t')
-      }
-      return [f.label, sec?.seriesId ?? '', f.codeId, prefix, f.type, agencyVal].join('\t')
+      const tsj = f.taxpayer === 'TP' ? '0 (Taxpayer)' : f.taxpayer === 'SP' ? '1 (Spouse)' : 'Both'
+      const suffix = f.multiValue ? '1000, 1001, 1002…' : '1000'
+      const charLimit = f.maxLength ? String(f.maxLength) : ''
+
+      return [
+        sec?.label ?? '',
+        sec?.seriesId ?? '',
+        f.label,
+        buildApiKey(f),
+        f.codeId,
+        tsj,
+        f.type,
+        suffix,
+        charLimit,
+        buildValidValues(f),
+        agencyVal,
+      ].join('\t')
     })
     return [header, ...rows].join('\n')
   }
@@ -144,6 +203,43 @@ export default function TaxMappingPortal({ onClose }: Props) {
     a.download = `tax-mapping-${sectionSlug}-${agencySlug}.csv`
     a.click()
     URL.revokeObjectURL(url)
+    setDownloadOpen(false)
+  }
+
+  function handleDownloadJson() {
+    const sectionMap = Object.fromEntries(SECTIONS.map(s => [s.id, s]))
+    const data = visibleFields.map(f => {
+      const sec = sectionMap[f.sectionId]
+      const entry: Record<string, unknown> = {
+        section:     sec?.label ?? f.sectionId,
+        seriesId:    sec?.seriesId ?? null,
+        field:       f.label,
+        apiKey:      buildApiKey(f),
+        codeId:      f.codeId,
+        prefix:      f.prefix === 'static' ? '1' : '1+',
+        taxpayer:    f.taxpayer === 'Both' ? 'Both' : f.taxpayer === 'TP' ? 'Taxpayer' : 'Spouse',
+        type:        f.type,
+        agency:      f.scope === 'FEDERAL' ? 'Federal' : AGENCIES.find(a => a.stateCode === f.scope)?.label.replace('Federal + ', '') ?? f.scope,
+      }
+      if (f.enumValues?.length) {
+        entry.validValues = Object.fromEntries(f.enumValues.map(ev => [ev.value, ev.label]))
+      }
+      if (f.maxLength) {
+        entry.maxLength = f.maxLength
+      }
+      return entry
+    })
+    const json = JSON.stringify(data, null, 2)
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    const sectionSlug = selectedSectionId ?? 'full-schema'
+    const agencySlug = agency.replace('+', '-')
+    a.href = url
+    a.download = `tax-mapping-${sectionSlug}-${agencySlug}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    setDownloadOpen(false)
   }
 
   const contentTitle = isFullSchema
@@ -158,7 +254,7 @@ export default function TaxMappingPortal({ onClose }: Props) {
       return groupedFields.map(({ section, fields }) => (
         <>
           <tr key={`group-${section.id}`} className="tm-section-group-row">
-            <td colSpan={7}>{section.label} · Series {section.seriesId}</td>
+            <td colSpan={10}>{section.label} · Series {section.seriesId}</td>
           </tr>
           {fields.map((field, i) => renderFieldRow(field, i, true))}
         </>
@@ -170,51 +266,143 @@ export default function TaxMappingPortal({ onClose }: Props) {
   function renderFieldRow(field: TaxField, i: number, showSection: boolean) {
     const section = SECTIONS.find(s => s.id === field.sectionId)
     const copyKey = field.codeId + field.sectionId + i
+    const enumKey = field.sectionId + field.codeId + i
     const agencyVal = field.scope === 'FEDERAL'
       ? 'Federal'
       : AGENCIES.find(a => a.stateCode === field.scope)?.label.replace('Federal + ', '') ?? field.scope
+    const tsjNum  = field.taxpayer === 'TP' ? '0' : field.taxpayer === 'SP' ? '1' : null
+    const tsjLabel = field.taxpayer === 'TP' ? 'Taxpayer' : field.taxpayer === 'SP' ? 'Spouse' : 'Both'
+    const hasEnum = !!field.enumValues?.length
+    const isEnumExpanded = expandedEnumKey === enumKey
+    // section(1) + series(1) + field(1) + code(1) + prefix(1) + tsj(1) + type(1) + suffix(1) + charlimit(1) + agency(1) = 10 with section, 8 without
+    const colSpan = showSection ? 10 : 8
 
     return (
-      <tr key={`${field.sectionId}-${field.codeId}-${i}`}>
-        <td className="tm-field-label">{field.label}</td>
-        {showSection && (
-          <td className="tm-section-cell">{section?.label}</td>
-        )}
-        <td style={{ fontFamily: 'var(--font)', fontSize: 14 }}>{section?.seriesId}</td>
-        <td>
-          <button
-            className="tm-code-id-btn"
-            onClick={() => { copyCodeId(copyKey); navigator.clipboard.writeText(field.codeId).catch(() => {}) }}
-            title={`Copy ${field.codeId}`}
-          >
-            {copiedId === copyKey
-              ? <span className="tm-copied-label">Copied!</span>
-              : (
-                <>
-                  {field.codeId}
-                  <span className="tm-copy-icon">
-                    <svg viewBox="0 0 14 14" fill="none" width="12" height="12">
-                      <rect x="5" y="5" width="8" height="8" rx="1" stroke="currentColor" strokeWidth="1.2"/>
-                      <path d="M4 9H3a1 1 0 01-1-1V3a1 1 0 011-1h5a1 1 0 011 1v1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-                    </svg>
+      <>
+        <tr key={`${field.sectionId}-${field.codeId}-${i}`}>
+          {showSection && (
+            <>
+              <td className="tm-section-col">{section?.label}</td>
+              <td className="tm-series-col">{section?.seriesId}</td>
+            </>
+          )}
+          <td className="tm-field-col">{field.label}</td>
+          {/* API Key — pre-assembled, copyable */}
+          <td className="tm-codeid-col">
+            <button
+              className="tm-code-id-btn"
+              onClick={() => { copyCodeId(copyKey); navigator.clipboard.writeText(field.codeId).catch(() => {}) }}
+              title={`Copy ${field.codeId}`}
+            >
+              {copiedId === copyKey
+                ? <span className="tm-copied-label">Copied!</span>
+                : (
+                  <>
+                    {field.codeId}
+                    <span className="tm-copy-icon">
+                      <svg viewBox="0 0 14 14" fill="none" width="12" height="12">
+                        <rect x="5" y="5" width="8" height="8" rx="1" stroke="currentColor" strokeWidth="1.2"/>
+                        <path d="M4 9H3a1 1 0 01-1-1V3a1 1 0 011-1h5a1 1 0 011 1v1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                      </svg>
+                    </span>
+                  </>
+                )
+              }
+            </button>
+          </td>
+          <td>
+            {field.prefix === 'static' ? (
+              <span className="tm-prefix-single">1</span>
+            ) : (
+              <span className="tm-prefix-multi">
+                1+
+                <span className="tm-affix-info-anchor">
+                  <svg className="tm-affix-info-icon" viewBox="0 0 14 14" fill="none" width="12" height="12">
+                    <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.2"/>
+                    <path d="M7 6.5v4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                    <circle cx="7" cy="4.5" r="0.7" fill="currentColor"/>
+                  </svg>
+                  <span className="tm-affix-tooltip">
+                    This section can repeat for multiple entries (e.g., multiple W-2s). The prefix increments per entry: 1, 2, 3…
                   </span>
-                </>
-              )
+                </span>
+              </span>
+            )}
+          </td>
+          <td>
+            <span className={`tm-badge-type tm-badge-tpsp--${field.taxpayer.toLowerCase()}`}>
+              {tsjNum !== null ? <><strong>{tsjNum}</strong> · </> : null}{tsjLabel}
+            </span>
+          </td>
+          <td>
+            {hasEnum ? (
+              <button
+                className={`tm-enum-badge ${isEnumExpanded ? 'tm-enum-badge--active' : ''}`}
+                onClick={() => setExpandedEnumKey(isEnumExpanded ? null : enumKey)}
+                title={isEnumExpanded ? 'Hide valid values' : 'Show valid values'}
+              >
+                ENUM
+                <svg
+                  viewBox="0 0 10 6" fill="none" width="8" height="8"
+                  className={`tm-enum-chevron ${isEnumExpanded ? 'tm-enum-chevron--open' : ''}`}
+                >
+                  <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            ) : (
+              <span className="tm-badge-type">{field.type}</span>
+            )}
+          </td>
+          <td>
+            {field.multiValue ? (
+              <span className="tm-suffix-multi">
+                1000+
+                <span className="tm-affix-info-anchor">
+                  <svg className="tm-affix-info-icon" viewBox="0 0 14 14" fill="none" width="12" height="12">
+                    <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.2"/>
+                    <path d="M7 6.5v4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                    <circle cx="7" cy="4.5" r="0.7" fill="currentColor"/>
+                  </svg>
+                  <span className="tm-affix-tooltip">
+                    This field supports multiple sub-values. Each additional value increments the suffix: 1000, 1001, 1002… The API aggregates them into one total.
+                  </span>
+                </span>
+              </span>
+            ) : (
+              <span className="tm-suffix-single">1000</span>
+            )}
+          </td>
+          <td>
+            {field.maxLength
+              ? <span className="tm-charlimit">{field.maxLength}</span>
+              : <span className="tm-charlimit tm-charlimit--none">—</span>
             }
-          </button>
-        </td>
-        <td style={{ fontFamily: 'var(--font)', fontSize: 14 }}>
-          {field.prefix === 'static' ? '1' : '1+'}
-        </td>
-        <td>
-          <span className="tm-badge-type">{field.type}</span>
-        </td>
-        <td>
-          <span className={`tm-badge-scope ${field.scope === 'FEDERAL' ? 'tm-badge-scope--federal' : 'tm-badge-scope--state'}`}>
-            {agencyVal}
-          </span>
-        </td>
-      </tr>
+          </td>
+          <td>
+            <span className={`tm-badge-scope ${field.scope === 'FEDERAL' ? 'tm-badge-scope--federal' : 'tm-badge-scope--state'}`}>
+              {agencyVal}
+            </span>
+          </td>
+        </tr>
+        {hasEnum && isEnumExpanded && (
+          <tr key={`enum-${enumKey}`} className="tm-enum-row">
+            <td colSpan={colSpan}>
+              <div className="tm-enum-values">
+                <span className="tm-enum-values-label">Valid values</span>
+                <ul className="tm-enum-list">
+                  {field.enumValues!.map((ev: EnumValue) => (
+                    <li key={ev.value} className="tm-enum-item">
+                      <span className="tm-enum-value-code">{ev.value}</span>
+                      <span className="tm-enum-value-sep">=</span>
+                      <span className="tm-enum-value-label">{ev.label}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </td>
+          </tr>
+        )}
+      </>
     )
   }
 
@@ -240,16 +428,18 @@ export default function TaxMappingPortal({ onClose }: Props) {
         <div className="tm-intro-text">
           <h3 className="tm-intro-title">Find the right code for any ProConnect field</h3>
           <p className="tm-intro-desc">
-            Each field in ProConnect Tax has a unique code you can use to inject data via the API.{' '}
-            <a
-              href="https://developer.intuit.com/app/developer/qbotax/docs/api-reference"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="tm-intro-link"
-            >
-              View full API documentation →
-            </a>
+            Each field in ProConnect Tax has a unique code you can use to inject data via the API.
           </p>
+          <div className="tm-intro-links">
+            <button className="tm-intro-link-btn" onClick={() => setShowGuide(true)}>
+              <svg viewBox="0 0 16 16" fill="none" width="15" height="15" style={{flexShrink: 0}}>
+                <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.4"/>
+                <path d="M6.5 6.5C6.5 5.67 7.17 5 8 5s1.5.67 1.5 1.5c0 .7-.46 1.3-1.1 1.52L8 8.25V9.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                <circle cx="8" cy="11.5" r="0.75" fill="currentColor"/>
+              </svg>
+              How to read this table
+            </button>
+          </div>
         </div>
         <div className="tm-intro-selects">
           {/* Return Type pill dropdown */}
@@ -400,20 +590,46 @@ export default function TaxMappingPortal({ onClose }: Props) {
               <span className="tm-content-subtitle">Series {activeSection.seriesId} · {agencyLabel}</span>
             )}
             <div className="tm-content-actions">
-              <button className="tm-action-btn" onClick={handleCopyTable} title="Copy table as CSV">
+              <button className="tm-action-btn" onClick={handleCopyTable} title="Copy table as tab-separated values (paste into Excel or Google Sheets)">
                 <svg viewBox="0 0 14 14" fill="none" width="13" height="13">
                   <rect x="5" y="5" width="8" height="8" rx="1" stroke="currentColor" strokeWidth="1.2"/>
                   <path d="M4 9H3a1 1 0 01-1-1V3a1 1 0 011-1h5a1 1 0 011 1v1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
                 </svg>
                 Copy table
               </button>
-              <button className="tm-action-btn tm-action-btn--primary" onClick={handleDownloadCsv} title="Download as CSV">
-                <svg viewBox="0 0 14 14" fill="none" width="13" height="13">
-                  <path d="M7 2v7M4 6l3 3 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M2 11h10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-                </svg>
-                Download CSV
-              </button>
+              <div className="tm-download-wrap" ref={downloadRef}>
+                <button
+                  className={`tm-action-btn tm-action-btn--primary tm-download-btn ${downloadOpen ? 'tm-action-btn--open' : ''}`}
+                  onClick={() => setDownloadOpen(v => !v)}
+                >
+                  <svg viewBox="0 0 14 14" fill="none" width="13" height="13">
+                    <path d="M7 2v7M4 6l3 3 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M2 11h10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                  </svg>
+                  Download
+                  <svg viewBox="0 0 10 6" fill="none" width="9" height="9" className="tm-download-chevron">
+                    <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+                {downloadOpen && (
+                  <div className="tm-download-dropdown">
+                    <button className="tm-download-option" onClick={handleDownloadCsv}>
+                      <svg viewBox="0 0 14 14" fill="none" width="13" height="13">
+                        <rect x="2" y="2" width="10" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.2"/>
+                        <path d="M4 5h6M4 7.5h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                      </svg>
+                      CSV — spreadsheet
+                    </button>
+                    <button className="tm-download-option" onClick={handleDownloadJson}>
+                      <svg viewBox="0 0 14 14" fill="none" width="13" height="13">
+                        <path d="M4 2H3a1 1 0 00-1 1v8a1 1 0 001 1h8a1 1 0 001-1V5l-3-3z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/>
+                        <path d="M8 2v3h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      JSON — API payload
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -464,13 +680,70 @@ export default function TaxMappingPortal({ onClose }: Props) {
               <table className="tm-table">
                 <thead>
                   <tr>
-                    <th>Field Label</th>
-                    {showSectionCol && <th>Section</th>}
-                    <th>Series</th>
-                    <th>Code ID</th>
-                    <th>Prefix</th>
-                    <th>Type</th>
-                    <th>Agency</th>
+                    {showSectionCol && (
+                      <>
+                        <th>
+                          <ColHeader
+                            label="Section"
+                            tip="The ProConnect form section this field belongs to"
+                          />
+                        </th>
+                        <th>
+                          <ColHeader
+                            label="Series"
+                            tip="The API identifier for this section — the numeric equivalent of the section name"
+                          />
+                        </th>
+                      </>
+                    )}
+                    <th>
+                      <ColHeader
+                        label="Field"
+                        tip="The field label as it appears in ProConnect Tax"
+                      />
+                    </th>
+                    <th>
+                      <ColHeader
+                        label="Code"
+                        tip="The unique identifier for this field in the API. Use this code in your payload to target the exact field. Click to copy."
+                      />
+                    </th>
+                    <th>
+                      <ColHeader
+                        label="Prefix"
+                        tip="1 = single entry per return. 1+ = multiple instances allowed (e.g. multiple W-2s). Increment the number for each additional entry."
+                      />
+                    </th>
+                    <th>
+                      <ColHeader
+                        label="TSJ"
+                        tip="Who this field belongs to: 0 = Taxpayer, 1 = Spouse, Both = applies to joint filers"
+                      />
+                    </th>
+                    <th>
+                      <ColHeader
+                        label="Type"
+                        tip="The data type expected by the API: String (text), Currency (dollar amount), Boolean (true/false), Date, or Enum (select from valid values)"
+                      />
+                    </th>
+                    <th>
+                      <ColHeader
+                        label="Suffix"
+                        tip="1000 = single value only. 1000, 1001, 1002… = field supports multiple values that aggregate into one total (e.g. wages from multiple states)"
+                      />
+                    </th>
+                    <th>
+                      <ColHeader
+                        label="Char limit"
+                        tip="Maximum number of characters accepted by the API for this field"
+                      />
+                    </th>
+                    <th>
+                      <ColHeader
+                        label="Agency"
+                        tip="Whether this field is required by the IRS (Federal) or a specific state tax authority"
+                      />
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -481,6 +754,8 @@ export default function TaxMappingPortal({ onClose }: Props) {
           </div>
         </div>
       </div>
+
+      {showGuide && <TaxMappingGuide onClose={() => setShowGuide(false)} />}
     </div>
   )
 }

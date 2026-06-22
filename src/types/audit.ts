@@ -91,6 +91,8 @@ export interface Version {
   changes?: Change[];
   relatedFields?: string[];
   apiSource?: string;
+  /** For revert/undo entries — the id of the version that was restored from */
+  sourceVersionId?: string;
 }
 
 export interface AuditLog {

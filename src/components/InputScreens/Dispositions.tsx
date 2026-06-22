@@ -141,7 +141,7 @@ export default function Dispositions() {
   }
 
   return (
-    <div className="screen">
+    <div className={`screen${isPreview ? ' screen--preview' : ''}`}>
       <div className="screen-title-row">
         <h1 className="screen-title">Dispositions (Schedule D, 4797)</h1>
       </div>
