@@ -1,0 +1,513 @@
+/* ─── Tax Mapping Trowser Overlay ─── */
+.tm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background: var(--bg-white);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ─── Trowser Header ─── */
+.tm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  height: 56px;
+  background: var(--bg-page);
+  border-bottom: 1px solid var(--divider);
+  flex-shrink: 0;
+}
+
+.tm-header-title {
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.tm-close-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  transition: all 0.12s;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.tm-close-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+/* ─── Intro Zone (centered title + dropdowns) ─── */
+.tm-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 24px 40px 20px;
+  border-bottom: 1px solid var(--divider);
+  flex-shrink: 0;
+  background: var(--bg-white);
+}
+
+.tm-intro-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  max-width: 640px;
+}
+
+.tm-intro-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  text-align: center;
+}
+
+.tm-intro-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.tm-intro-link {
+  color: var(--action-primary);
+  text-decoration: none;
+}
+.tm-intro-link:hover {
+  text-decoration: underline;
+}
+
+.tm-intro-selects {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+/* Override filter-pill-wrap flex:1 — we want auto-width in intro */
+.tm-filter-pill-wrap {
+  flex: 0 0 auto !important;
+  min-width: 160px;
+}
+
+.tm-filter-dropdown {
+  min-width: 220px;
+  z-index: 950;
+}
+
+/* ─── Body (nav + content) ─── */
+.tm-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ─── Left Nav ─── */
+.tm-nav {
+  width: 341px;
+  flex-shrink: 0;
+  background: var(--bg-page);
+  border-right: 1px solid #c3ced5;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px 0;
+}
+
+.tm-nav-search-wrap {
+  padding: 0 12px 8px;
+  flex-shrink: 0;
+}
+
+/* "Entire agency schema" row — styled like a nav item */
+.tm-nav-full-schema {
+  display: flex;
+  align-items: center;
+  width: calc(100% - 24px);
+  margin: 0 12px 8px;
+  padding: 10px 12px;
+  border: 1px solid #c3ced5;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--action-primary);
+  background: var(--bg-white);
+  border: none;
+  border-top: 1px solid #c3ced5;
+  border-bottom: 1px solid #c3ced5;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: background 0.12s;
+  flex-shrink: 0;
+}
+.tm-nav-full-schema:hover { background: var(--bg-hover); }
+.tm-nav-full-schema--active {
+  background: #e2e9ed;
+}
+
+/* Nav tree scroll area */
+.tm-nav-tree {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 12px 12px;
+}
+
+/* Bordered wrapper around all category+item groups */
+.tm-nav-tree > div {
+  border-left: 1px solid #c3ced5;
+  border-right: 1px solid #c3ced5;
+}
+.tm-nav-tree > div:first-child {
+  border-top: 1px solid #c3ced5;
+  border-radius: 4px 4px 0 0;
+  overflow: hidden;
+}
+.tm-nav-tree > div:last-child {
+  border-bottom: 1px solid #c3ced5;
+  border-radius: 0 0 4px 4px;
+  overflow: hidden;
+}
+
+/* Category header row */
+.tm-nav-category-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-primary);
+  background: var(--bg-white);
+  border: none;
+  border-top: 1px solid #c3ced5;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: background 0.12s;
+}
+.tm-nav-category-btn:first-child { border-top: none; }
+.tm-nav-category-btn:hover { background: var(--bg-hover); }
+.tm-nav-category-btn--bold { font-weight: 600; }
+
+.tm-nav-category-chevron {
+  transition: transform 0.18s;
+  color: var(--text-tertiary);
+}
+.tm-nav-category-chevron--open { transform: rotate(180deg); }
+
+/* Section nav item */
+.tm-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--bg-page);
+  border: none;
+  border-left: 3px solid transparent;
+  border-top: 1px solid #c3ced5;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: background 0.12s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tm-nav-item:hover { background: var(--bg-hover); }
+.tm-nav-item--active {
+  background: #e2e9ed;
+  border-left-color: var(--action-primary);
+}
+
+/* Multi-instance pill in nav */
+.tm-nav-multi-badge {
+  margin-left: auto;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #92400e;
+  padding: 1px 5px;
+  white-space: nowrap;
+}
+
+/* ─── Content Area ─── */
+.tm-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-white);
+}
+
+.tm-content-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 40px 14px;
+  flex-shrink: 0;
+}
+
+.tm-content-title {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.tm-content-subtitle {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+/* Subtle text badge (FEDERAL / STATE) */
+.tm-scope-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  border: 1px solid #d4d7dc;
+  color: var(--text-primary);
+  background: var(--bg-white);
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+.tm-content-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.tm-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-family: var(--font);
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.tm-action-btn:hover {
+  background: var(--bg-page);
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+.tm-action-btn--primary {
+  background: var(--action-primary);
+  color: #fff;
+  border-color: var(--action-primary);
+}
+.tm-action-btn--primary:hover {
+  background: var(--action-primary-hover);
+  border-color: var(--action-primary-hover);
+  color: #fff;
+}
+
+/* ─── Info Banner ─── */
+.tm-info-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 40px;
+  padding: 12px 16px;
+  background: #d9effb;
+  border: 1px solid #0077c5;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #393a3d;
+  flex-shrink: 0;
+}
+.tm-info-box svg { flex-shrink: 0; margin-top: 2px; }
+.tm-info-box strong { font-weight: 600; }
+
+.tm-info-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.tm-info-list li {
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(0, 119, 197, 0.2);
+}
+.tm-info-list li:first-child { padding-top: 0; }
+.tm-info-list li:last-child { padding-bottom: 0; border-bottom: none; }
+
+/* ─── Table ─── */
+.tm-table-wrap {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 40px 32px;
+}
+
+.tm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.tm-table thead tr {
+  background: var(--bg-page);
+  border-bottom: 1px solid var(--divider);
+}
+
+.tm-table th {
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--divider);
+}
+
+.tm-table tbody tr {
+  border-bottom: 1px solid var(--divider);
+}
+.tm-table tbody tr:last-child { border-bottom: none; }
+.tm-table tbody tr:hover { background: var(--bg-page); }
+
+.tm-table td {
+  padding: 14px;
+  vertical-align: middle;
+  color: var(--text-primary);
+}
+
+/* Section group header row (full schema only) */
+.tm-section-group-row td {
+  padding: 10px 14px 6px;
+  background: var(--bg-page);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  border-top: 2px solid var(--divider);
+}
+
+.tm-field-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.tm-section-cell {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+/* Badges */
+.tm-badge-type {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.tm-badge-scope {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.tm-badge-scope--federal {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.tm-badge-scope--state {
+  background: #f3e8ff;
+  color: #7e22ce;
+}
+
+.tm-code-id-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: 14px;
+  font-weight: 400;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: opacity 0.12s;
+  white-space: nowrap;
+}
+.tm-code-id-btn:hover { opacity: 0.75; }
+.tm-code-id-btn:hover .tm-copy-icon { opacity: 1; }
+
+.tm-copy-icon {
+  opacity: 0;
+  transition: opacity 0.12s;
+  color: var(--text-tertiary);
+}
+
+.tm-copied-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #059669;
+  font-family: var(--font);
+}
+
+/* ─── Empty state ─── */
+.tm-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  text-align: center;
+  color: var(--text-tertiary);
+}
+.tm-empty p { font-size: 14px; margin-top: 8px; }
+

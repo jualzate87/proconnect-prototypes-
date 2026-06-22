@@ -62,6 +62,7 @@ export interface AppActions {
 export interface AppContextType extends AppState, AppActions {
   /** Snapshot data in preview mode; live taxData otherwise */
   displayTaxData: TaxReturnData
+  openTaxMapping: () => void
 }
 
 export const AppContext = createContext<AppContextType | undefined>(undefined)

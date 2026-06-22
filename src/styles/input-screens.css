@@ -47,7 +47,7 @@
 }
 .employer-tab:hover { border-color: var(--text-secondary); }
 .employer-tab--active {
-  background: #e6f0ff;
+  background: #E2E9ED;
   border-color: var(--action-primary);
   color: var(--action-primary);
 }
@@ -284,7 +284,7 @@
 }
 
 .info-box {
-  background: #eef4ff;
+  background: #E2E9ED;
   border-left: 4px solid var(--action-primary);
   padding: 10px 14px;
   border-radius: var(--radius-sm);
@@ -314,7 +314,7 @@
 
 .guide-item:hover {
   border-color: var(--action-primary);
-  background: #eef4ff;
+  background: #E2E9ED;
 }
 
 .guide-item input[type="checkbox"] {

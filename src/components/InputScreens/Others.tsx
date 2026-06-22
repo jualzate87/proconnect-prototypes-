@@ -1,9 +1,8 @@
-import type { CSSProperties } from 'react'
 import { useAppContext } from '../../index'
 import '../../styles/input-screens.css'
 
 export default function Others() {
-  const { displayTaxData, updateTaxData, highlightedFields, highlightColor, previewVersionId } = useAppContext()
+  const { displayTaxData, updateTaxData, previewVersionId } = useAppContext()
   const other = displayTaxData.other || {
     propertyAddress: '', propertyCity: '', propertyState: '',
     daysRented: 0, rentalIncome: 0, rentalExpenses: 0,
@@ -19,15 +18,7 @@ export default function Others() {
     updateTaxData('other', { ...other, [field]: parsed })
   }
 
-  const inputStyle = (fieldKey: string): CSSProperties => {
-    const isHighlighted = highlightedFields.includes(`other.${fieldKey}`)
-    if (!isHighlighted || !highlightColor) return {}
-    return {
-      background: `${highlightColor}1a`,
-      borderColor: highlightColor,
-      boxShadow: `inset 3px 0 0 ${highlightColor}`,
-    }
-  }
+  const inputStyle = (_fieldKey: string) => ({})
 
   const netRental = (other.rentalIncome || 0) - (other.rentalExpenses || 0)
 
