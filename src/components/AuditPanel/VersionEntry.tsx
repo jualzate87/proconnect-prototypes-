@@ -317,9 +317,9 @@ export default function VersionEntry({ version }: VersionEntryProps) {
             <span
               className="entry-type-badge"
               style={{
-                background:  typeColor + '18',
-                color:       typeColor,
-                borderColor: typeColor + '40',
+                background:  typeColor,
+                color:       '#ffffff',
+                borderColor: 'transparent',
               }}
             >
               {typeLabel}

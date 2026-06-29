@@ -7,12 +7,12 @@ const DAY  = 86400000
 
 // ── Change-type color palette (not author-based) ──────────────────────────────
 export const CHANGE_TYPE_COLORS: Record<string, string> = {
-  manual_entry:    '#5d686f', // neutral gray
-  document_import: '#5d686f', // neutral gray
-  api_import:      '#5d686f', // neutral gray
+  manual_entry:    '#5d686f', // neutral/pepper/80 — human entry
+  document_import: '#00856d', // primary/spearmint/80 — native import
+  api_import:      '#205ea3', // primary/blueberry/80 — API/automated
   revert:          '#c2600a', // warm orange — restore is consequential
   undo:            '#475569', // slate — directional, not alarming
-  copy:            '#5d686f', // neutral gray
+  copy:            '#5d686f', // neutral
 }
 
 export function getChangeTypeColor(changeType: string, isUndo = false): string {

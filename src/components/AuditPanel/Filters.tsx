@@ -244,7 +244,7 @@ export default function Filters() {
             <Chevron />
           </button>
           {activityOpen && (
-            <div className="filter-dropdown">
+            <div className="filter-dropdown filter-dropdown--right">
               {ACTIVITY_OPTIONS.map(opt => {
                 const isActive = (filters.changeType || '') === opt.value
                 return (

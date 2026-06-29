@@ -13,6 +13,7 @@ const GROUP_ORDER = [
   'Today',
   'Yesterday',
   'Last 7 days',
+  'Last 2 weeks',
   'Last 30 days',
   'Last 90 days',
   'This year',
@@ -31,6 +32,7 @@ function getTimeGroup(timestamp: number): string {
   if (timestamp >= todayMs) return 'Today'
   if (timestamp >= yesterdayMs) return 'Yesterday'
   if (timestamp >= todayMs - 7 * DAY) return 'Last 7 days'
+  if (timestamp >= todayMs - 14 * DAY) return 'Last 2 weeks'
   if (timestamp >= todayMs - 30 * DAY) return 'Last 30 days'
   if (timestamp >= todayMs - 90 * DAY) return 'Last 90 days'
 
