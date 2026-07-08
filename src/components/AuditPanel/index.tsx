@@ -89,7 +89,7 @@ function exportCSV(
 }
 
 export default function AuditPanel({ onClose }: AuditPanelProps) {
-  const { getVisibleVersions, auditScenario, isLocked, bannerDismissed, dismissBanner } = useAppContext()
+  const { getVisibleVersions, auditScenario, bannerDismissed, dismissBanner } = useAppContext()
   const versions = getVisibleVersions()
   const [exportOpen, setExportOpen] = useState(false)
   const exportRef = useRef<HTMLDivElement>(null)
