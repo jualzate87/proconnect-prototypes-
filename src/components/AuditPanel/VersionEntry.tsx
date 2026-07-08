@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { Version } from '../../types'
 import { useAppContext } from '../../index'
 import { getChangeTypeColor, SECTION_DISPLAY } from '../../lib/mock-data'
+import PreviewTrowser from '../PreviewTrowser'
 
 interface VersionEntryProps {
   version: Version
@@ -65,6 +66,8 @@ export default function VersionEntry({ version }: VersionEntryProps) {
     previewVersion,
     revertToVersion,
     undoChange,
+    isLocked,
+    setLocked,
   } = useAppContext()
 
   const isCurrent    = version.id === auditLog.currentVersionId
@@ -85,6 +88,8 @@ export default function VersionEntry({ version }: VersionEntryProps) {
   const [showMenu, setShowMenu]                   = useState(false)
   const [showRestoreConfirm, setShowRestoreConfirm] = useState(false)
   const [showUndoConfirm, setShowUndoConfirm]     = useState(false)
+  const [showLockedModal, setShowLockedModal]     = useState(false)
+  const [showTrowser, setShowTrowser]             = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
   // Close menu on outside click
@@ -99,16 +104,19 @@ export default function VersionEntry({ version }: VersionEntryProps) {
 
   // Close any open modal on Escape
   useEffect(() => {
-    if (!showRestoreConfirm && !showUndoConfirm) return
+    if (!showRestoreConfirm && !showUndoConfirm && !showLockedModal) return
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setShowRestoreConfirm(false)
         setShowUndoConfirm(false)
+        setShowLockedModal(false)
       }
     }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
-  }, [showRestoreConfirm, showUndoConfirm])
+  }, [showRestoreConfirm, showUndoConfirm, showLockedModal])
+
+  // Trowser is handled by PreviewTrowser's own Escape listener
 
   const isUndo    = version.changeType === 'revert' && version.label.startsWith('Undid:')
   const typeColor = getChangeTypeColor(version.changeType, isUndo)
@@ -123,9 +131,13 @@ export default function VersionEntry({ version }: VersionEntryProps) {
     version.changeType !== 'copy'
 
   // ── Action menu handlers ──────────────────────────────────────────────────
-  const handlePreview        = () => { previewVersion(version.id); setShowMenu(false) }
+  const handlePreview        = () => { setShowTrowser(true); setShowMenu(false) }
   const handleRevert         = () => { setShowRestoreConfirm(true); setShowMenu(false) }
   const handleConfirmRestore = () => { revertToVersion(version.id); setShowRestoreConfirm(false) }
+  const handleUndoRequest    = () => {
+    setShowMenu(false)
+    if (isLocked) { setShowLockedModal(true) } else { setShowUndoConfirm(true) }
+  }
   const handleConfirmUndo    = () => { undoChange(version.id); setShowUndoConfirm(false) }
 
   // ── Source version lookup (for revert/undo entries) ──────────────────────
@@ -151,12 +163,39 @@ export default function VersionEntry({ version }: VersionEntryProps) {
   // For restore: ALL entries after this point in time are lost
   const impactedVersions = versionsAfter
 
+  // ── Locked modal (shown when return is locked and user tries to undo) ──────
+  const lockedModal = showLockedModal && createPortal(
+    <div className="modal-overlay" onClick={() => setShowLockedModal(false)}>
+      <div className="restore-confirm-modal locked-modal" onClick={e => e.stopPropagation()}>
+        <button className="restore-confirm-close locked-modal-close" onClick={() => setShowLockedModal(false)} aria-label="Close">
+          <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+        </button>
+        <div className="locked-modal-body">
+          <div className="locked-modal-icon">
+            <svg viewBox="0 0 24 24" fill="none" width="36" height="36">
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" fill="#d93f3f"/>
+              <path d="M12 9v4" stroke="#fff" strokeWidth="1.8" strokeLinecap="round"/>
+              <circle cx="12" cy="17" r="1" fill="#fff"/>
+            </svg>
+          </div>
+          <h2 className="locked-modal-title">Unlock this return to restore a version</h2>
+          <p className="locked-modal-body-text">This return is locked. You need to unlock it to allow changes and restore a past version.</p>
+        </div>
+        <div className="restore-confirm-footer">
+          <button className="modal-btn" onClick={() => setShowLockedModal(false)}>Cancel</button>
+          <button className="modal-btn primary" onClick={() => { setLocked(false); setShowLockedModal(false) }}>Unlock return</button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  )
+
   // ── Undo confirm modal ────────────────────────────────────────────────────
   const undoConfirmModal = showUndoConfirm && canUndo && createPortal(
     <div className="modal-overlay" onClick={() => setShowUndoConfirm(false)}>
       <div className="restore-confirm-modal" onClick={e => e.stopPropagation()}>
         <div className="restore-confirm-header">
-          <h2 className="restore-confirm-title">Undo "{version.description}"?</h2>
+          <h2 className="restore-confirm-title">Undo this change?</h2>
           <button className="restore-confirm-close" onClick={() => setShowUndoConfirm(false)} aria-label="Close">
             <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
           </button>
@@ -164,7 +203,7 @@ export default function VersionEntry({ version }: VersionEntryProps) {
 
         <div className="restore-confirm-body">
           <p className="restore-confirm-lead">
-            The affected values will go back to how they were before this change.
+            This removes the updates from your {version.description}. Your other changes will stay exactly as they are.
           </p>
 
           {thisSections.length > 0 && (
@@ -177,14 +216,14 @@ export default function VersionEntry({ version }: VersionEntryProps) {
           )}
 
           <p className="restore-confirm-note">
-            This will be recorded in the activity log. You can restore this change at any time.
+            We'll log this action in your activity log. You can redo it at any time.
           </p>
         </div>
 
         <div className="restore-confirm-footer">
-          <button className="modal-btn" onClick={() => setShowUndoConfirm(false)}>Keep change</button>
+          <button className="modal-btn" onClick={() => setShowUndoConfirm(false)}>Cancel</button>
           <button className="modal-btn primary" onClick={handleConfirmUndo}>
-            Undo
+            Undo this change
           </button>
         </div>
       </div>
@@ -284,15 +323,9 @@ export default function VersionEntry({ version }: VersionEntryProps) {
                   <button className="action-menu-item" onClick={handlePreview}>
                     Preview this version
                   </button>
-                  {!isCurrent && (
-                    <button
-                      className="action-menu-item action-menu-item--with-desc"
-                      onClick={handleRevert}
-                    >
-                      <span className="action-menu-item-body">
-                        <span className="action-menu-item-label">Restore to this version</span>
-                        <span className="action-menu-item-desc">Replaces the entire return with this snapshot.</span>
-                      </span>
+                  {canUndo && (
+                    <button className="action-menu-item" onClick={handleUndoRequest}>
+                      Undo this change
                     </button>
                   )}
                 </div>
@@ -343,6 +376,8 @@ export default function VersionEntry({ version }: VersionEntryProps) {
         </div>
       </div>
 
+      {showTrowser && <PreviewTrowser version={version} onClose={() => setShowTrowser(false)} />}
+      {lockedModal}
       {undoConfirmModal}
       {restoreConfirmModal}
     </>

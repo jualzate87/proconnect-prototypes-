@@ -21,6 +21,8 @@ function getScreenForFields(fields: string[]): ScreenName {
   return 'income'
 }
 
+export type AuditScenario = 'empty' | 'with-entries' | 'error'
+
 export interface AppState {
   taxData: TaxReturnData
   auditLog: AuditLog
@@ -35,6 +37,9 @@ export interface AppState {
   highlightColor: string
   toast: string | null
   returnName: string
+  isLocked: boolean
+  auditScenario: AuditScenario
+  bannerDismissed: boolean
 }
 
 export interface AppActions {
@@ -57,6 +62,9 @@ export interface AppActions {
   getVisibleVersions: () => Version[]
   getCurrentVersion: () => Version | undefined
   getVersionById: (versionId: string) => Version | undefined
+  setLocked: (locked: boolean) => void
+  setAuditScenario: (scenario: AuditScenario) => void
+  dismissBanner: () => void
 }
 
 export interface AppContextType extends AppState, AppActions {
@@ -97,6 +105,9 @@ export function initializeAppState(): AppState {
           highlightColor: '',
           toast: null,
           returnName: pending.returnName,
+          isLocked: false,
+          auditScenario: 'with-entries' as AuditScenario,
+          bannerDismissed: false,
         }
       }
     } catch { /* ignore parse errors */ }
@@ -134,6 +145,9 @@ export function initializeAppState(): AppState {
     highlightColor: '',
     toast: null,
     returnName: 'Jordan Wells',
+    isLocked: false,
+    auditScenario: 'with-entries',
+    bannerDismissed: false,
   }
 }
 
@@ -406,6 +420,20 @@ export function createAppStore(_initialState: AppState) {
 
       clearHighlight: (state: AppState): AppState => ({
         ...state, highlightedFields: [], highlightColor: ''
+      }),
+
+      setLocked: (state: AppState, locked: boolean): AppState => ({
+        ...state,
+        isLocked: locked,
+        toast: locked ? 'Return locked' : 'Return unlocked',
+      }),
+
+      setAuditScenario: (state: AppState, scenario: AuditScenario): AppState => ({
+        ...state, auditScenario: scenario,
+      }),
+
+      dismissBanner: (state: AppState): AppState => ({
+        ...state, bannerDismissed: true
       }),
 
       getVisibleVersions: (state: AppState): Version[] => {

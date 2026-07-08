@@ -1,11 +1,24 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useAppContext } from '../index'
 import './Header.css'
 
 export default function Header() {
-  const { previewVersionId, returnName, openTaxMapping } = useAppContext()
+  const { previewVersionId, returnName, openTaxMapping, isLocked, setLocked } = useAppContext()
   const isPreview = !!previewVersionId
   const [showSettingsMenu, setShowSettingsMenu] = useState(false)
+  const [showReturnActions, setShowReturnActions] = useState(false)
+  const returnActionsRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!showReturnActions) return
+    const handler = (e: MouseEvent) => {
+      if (returnActionsRef.current && !returnActionsRef.current.contains(e.target as Node)) {
+        setShowReturnActions(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showReturnActions])
 
   function handleTaxMapping() {
     setShowSettingsMenu(false)
@@ -64,6 +77,18 @@ export default function Header() {
               <path d="M5.5 7V5a2.5 2.5 0 015 0v2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
               <circle cx="8" cy="11" r="1" fill="currentColor"/>
             </svg>
+          )}
+
+          {/* Locked badge */}
+          {isLocked && !isPreview && (
+            <span className="header-lock-badge">
+              <svg viewBox="0 0 14 14" fill="none" width="11" height="11">
+                <rect x="2.5" y="6" width="9" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.3"/>
+                <path d="M4.5 6V4.5a2.5 2.5 0 015 0V6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                <circle cx="7" cy="9.5" r="1" fill="currentColor"/>
+              </svg>
+              Locked
+            </span>
           )}
 
           <div className="header-client-sep" />
@@ -141,12 +166,55 @@ export default function Header() {
                   <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </button>
-              <button className="header-btn header-btn--primary">
-                Return actions
-                <svg viewBox="0 0 12 12" fill="none" width="10" height="10">
-                  <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
+              <div className="header-return-actions-wrap" ref={returnActionsRef}>
+                <button
+                  className="header-btn header-btn--primary"
+                  onClick={() => setShowReturnActions(o => !o)}
+                >
+                  Return actions
+                  <svg viewBox="0 0 12 12" fill="none" width="10" height="10">
+                    <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+                {showReturnActions && (
+                  <div className="header-return-dropdown">
+                    <button className="header-return-dropdown-item" onClick={() => setShowReturnActions(false)}>
+                      E-file return
+                    </button>
+                    <button className="header-return-dropdown-item" onClick={() => setShowReturnActions(false)}>
+                      Print return
+                    </button>
+                    <button className="header-return-dropdown-item" onClick={() => setShowReturnActions(false)}>
+                      Amend return
+                    </button>
+                    {isLocked ? (
+                      <button
+                        className="header-return-dropdown-item unlock"
+                        onClick={() => { setLocked(false); setShowReturnActions(false) }}
+                      >
+                        <svg viewBox="0 0 16 16" fill="none" width="13" height="13">
+                          <rect x="3" y="7" width="10" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.3"/>
+                          <path d="M5.5 7V5a2.5 2.5 0 015 0" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                          <circle cx="8" cy="11" r="1" fill="currentColor"/>
+                        </svg>
+                        Unlock return
+                      </button>
+                    ) : (
+                      <button
+                        className="header-return-dropdown-item"
+                        onClick={() => { setShowReturnActions(false) }}
+                      >
+                        <svg viewBox="0 0 16 16" fill="none" width="13" height="13">
+                          <rect x="3" y="7" width="10" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.3"/>
+                          <path d="M5.5 7V5a2.5 2.5 0 015 0v2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                          <circle cx="8" cy="11" r="1" fill="currentColor"/>
+                        </svg>
+                        Lock return
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             </>
           )}
         </div>

@@ -14,7 +14,6 @@ interface SectionSummary {
   displayName: string
   versions: Version[]
   lastModified: number
-  lastAuthor: string
   changeCount: number
   typeBadges: string[]
 }
@@ -51,7 +50,6 @@ function getSections(versions: Version[]): SectionSummary[] {
         displayName: SECTION_DISPLAY[key] || key,
         versions: sorted,
         lastModified: sorted[0].timestamp,
-        lastAuthor: sorted[0].author,
         changeCount: sorted.length,
         typeBadges: types,
       }
@@ -96,9 +94,7 @@ function SectionRow({ section, onDrillIn }: SectionRowProps) {
             {section.changeCount} {section.changeCount === 1 ? 'change' : 'changes'}
           </span>
           <span className="section-row-sep">·</span>
-          <span className="section-row-author">{section.lastAuthor}</span>
-          <span className="section-row-sep">·</span>
-          <span className="section-row-date">{formatRelativeDate(section.lastModified)}</span>
+          <span className="section-row-date">Updated {formatRelativeDate(section.lastModified)}</span>
         </div>
         <div className="section-row-badges">
           {section.typeBadges.map(type => {

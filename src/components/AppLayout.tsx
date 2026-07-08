@@ -8,10 +8,17 @@ import InputScreens from './InputScreens'
 import AuditPanel from './AuditPanel'
 import PreviewBanner from './PreviewBanner'
 import Toast from './Toast'
+import { AuditScenario } from '../lib/store'
 import './AppLayout.css'
 
+const SCENARIOS: { value: AuditScenario; label: string }[] = [
+  { value: 'empty',        label: 'Empty state' },
+  { value: 'with-entries', label: 'With entries' },
+  { value: 'error',        label: 'Error' },
+]
+
 export default function AppLayout() {
-  const { isAuditPanelOpen, setAuditPanelOpen, previewVersionId } = useAppContext()
+  const { isAuditPanelOpen, setAuditPanelOpen, previewVersionId, auditScenario, setAuditScenario } = useAppContext()
 
   return (
     <div className="app-layout">
@@ -42,7 +49,21 @@ export default function AppLayout() {
 
           {/* Audit panel — flex sibling at the far right, pushes content left */}
           {isAuditPanelOpen && (
-            <AuditPanel onClose={() => setAuditPanelOpen(false)} />
+            <div className="audit-panel-with-scenario">
+              <div className="audit-scenario-bar">
+                <span className="audit-scenario-label">Scenario:</span>
+                {SCENARIOS.map(s => (
+                  <button
+                    key={s.value}
+                    className={`audit-scenario-btn${auditScenario === s.value ? ' audit-scenario-btn--active' : ''}`}
+                    onClick={() => setAuditScenario(s.value)}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+              <AuditPanel onClose={() => setAuditPanelOpen(false)} />
+            </div>
           )}
         </div>
       </div>

@@ -11,7 +11,11 @@ function fromDateInputValue(val: string, endOfDay = false): number {
   return d.getTime()
 }
 
-export default function Filters() {
+interface FiltersProps {
+  hideAuthorFilter?: boolean
+}
+
+export default function Filters({ hideAuthorFilter = false }: FiltersProps) {
   const { filters, setFilters, clearFilters, auditLog } = useAppContext()
   const [dateOpen,     setDateOpen]     = useState(false)
   const [authorOpen,   setAuthorOpen]   = useState(false)
@@ -202,7 +206,8 @@ export default function Filters() {
           )}
         </div>
 
-        {/* Author */}
+        {/* Author — hidden on section overview */}
+        {!hideAuthorFilter && (
         <div className="filter-pill-wrap" ref={authorRef}>
           <button
             className={`filter-pill${filters.author ? ' filter-pill--active' : ''}`}
@@ -233,6 +238,7 @@ export default function Filters() {
             </div>
           )}
         </div>
+        )}
 
         {/* Activity type */}
         <div className="filter-pill-wrap" ref={activityRef}>

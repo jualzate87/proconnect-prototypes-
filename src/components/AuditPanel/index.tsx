@@ -89,7 +89,7 @@ function exportCSV(
 }
 
 export default function AuditPanel({ onClose }: AuditPanelProps) {
-  const { getVisibleVersions } = useAppContext()
+  const { getVisibleVersions, auditScenario, isLocked, bannerDismissed, dismissBanner } = useAppContext()
   const versions = getVisibleVersions()
   const [exportOpen, setExportOpen] = useState(false)
   const exportRef = useRef<HTMLDivElement>(null)
@@ -172,21 +172,105 @@ export default function AuditPanel({ onClose }: AuditPanelProps) {
         </div>
       </div>
 
-      {/* Filters */}
-      <Filters />
+      {/* Filters — hide in error/empty scenarios or when locked */}
+      {auditScenario === 'with-entries' && !isLocked && <Filters hideAuthorFilter={true} />}
 
-      {/* Section list — always section view at first level */}
+      {/* Content */}
       <div className="audit-panel-content">
-        {versions.length > 0 ? (
-          <SectionList versions={versions} />
-        ) : (
-          <div className="empty-state">
-            <svg viewBox="0 0 40 40" fill="none" width="36" height="36" style={{ marginBottom: 10 }}>
-              <circle cx="20" cy="20" r="15" stroke="#d4d7dc" strokeWidth="1.5"/>
-              <path d="M20 13v7l4 4" stroke="#d4d7dc" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-            <h3>No activity found</h3>
-            <p>Try adjusting your filters</p>
+        {auditScenario === 'empty' && (
+          <>
+            {/* Page message — dismissible */}
+            {!bannerDismissed && (
+              <div className="audit-page-message">
+                <div className="audit-page-message-icon">
+                  <svg viewBox="0 0 20 20" fill="none" width="16" height="16">
+                    <circle cx="10" cy="10" r="8" fill="var(--action-primary)"/>
+                    <path d="M10 9v5M10 7h.01" stroke="#fff" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <div className="audit-page-message-body">
+                  <p className="audit-page-message-title"><strong>Welcome to your new Audit log</strong></p>
+                  <p className="audit-page-message-text">We'll now automatically track <strong>data entry changes</strong> as you work. Tracking started on <strong>June 15, 2026</strong>, so updates made <strong>before this date won't appear.</strong></p>
+                </div>
+                <button className="audit-page-message-close" onClick={dismissBanner} aria-label="Dismiss">
+                  <svg viewBox="0 0 16 16" fill="none" width="12" height="12"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                </button>
+              </div>
+            )}
+            <div className="audit-empty-full">
+              <svg viewBox="0 0 64 64" fill="none" width="64" height="64" style={{ marginBottom: 16 }}>
+                <rect x="8" y="10" width="36" height="44" rx="4" stroke="#c3ced5" strokeWidth="2"/>
+                <path d="M16 22h20M16 30h20M16 38h12" stroke="#c3ced5" strokeWidth="2" strokeLinecap="round"/>
+                <circle cx="48" cy="46" r="10" fill="#f0f4f6" stroke="#c3ced5" strokeWidth="2"/>
+                <path d="M44 46l3 3 5-5" stroke="#c3ced5" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <h3 className="audit-empty-title">No history to show yet</h3>
+              <p className="audit-empty-desc">Activities will appear here as soon as changes are made. This log tracks <strong>data entry updates from imports, APIs, and manual entries</strong> as you work on the return.</p>
+            </div>
+          </>
+        )}
+
+        {auditScenario === 'with-entries' && !isLocked && (
+          <>
+            {/* Page message — dismissible */}
+            {!bannerDismissed && (
+              <div className="audit-page-message">
+                <div className="audit-page-message-icon">
+                  <svg viewBox="0 0 20 20" fill="none" width="16" height="16">
+                    <circle cx="10" cy="10" r="8" fill="var(--action-primary)"/>
+                    <path d="M10 9v5M10 7h.01" stroke="#fff" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <div className="audit-page-message-body">
+                  <p className="audit-page-message-title"><strong>Welcome to your new Audit log</strong></p>
+                  <p className="audit-page-message-text">We'll now automatically track <strong>data entry changes</strong> as you work. Tracking started on <strong>June 15, 2026</strong>, so updates made <strong>before this date won't appear.</strong></p>
+                </div>
+                <button className="audit-page-message-close" onClick={dismissBanner} aria-label="Dismiss">
+                  <svg viewBox="0 0 16 16" fill="none" width="12" height="12"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                </button>
+              </div>
+            )}
+            {versions.length > 0 ? (
+              <SectionList versions={versions} />
+            ) : (
+              <div className="empty-state">
+                <svg viewBox="0 0 40 40" fill="none" width="36" height="36" style={{ marginBottom: 10 }}>
+                  <circle cx="20" cy="20" r="15" stroke="#d4d7dc" strokeWidth="1.5"/>
+                  <path d="M20 13v7l4 4" stroke="#d4d7dc" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                <h3>No activity found</h3>
+                <p>Try adjusting your filters</p>
+              </div>
+            )}
+          </>
+        )}
+
+        {auditScenario === 'error' && (
+          <div className="audit-error-state">
+            <div className="audit-error-icon">
+              <svg viewBox="0 0 24 24" fill="none" width="40" height="40">
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" fill="#d93f3f"/>
+                <path d="M12 9v4" stroke="#fff" strokeWidth="1.8" strokeLinecap="round"/>
+                <circle cx="12" cy="17" r="1" fill="#fff"/>
+              </svg>
+            </div>
+            <h3 className="audit-error-title">We couldn't load the version history</h3>
+            <p className="audit-error-desc">The service is temporarily down. Try refreshing the page or loading the history again.</p>
+            <button className="audit-error-retry">Try again</button>
+          </div>
+        )}
+
+        {isLocked && (
+          <div className="audit-locked-state">
+            <div className="audit-locked-icon">
+              <svg viewBox="0 0 24 24" fill="none" width="28" height="28">
+                <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M8 11V7a4 4 0 018 0v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                <circle cx="12" cy="16" r="1.5" fill="currentColor"/>
+              </svg>
+            </div>
+            <h3 className="audit-locked-title">Return is locked</h3>
+            <p className="audit-locked-desc">This return is locked. Unlock it from Return actions to view activity or make changes.</p>
           </div>
         )}
       </div>

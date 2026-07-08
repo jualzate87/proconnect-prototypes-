@@ -74,6 +74,15 @@ function MainApp() {
     getVisibleVersions: () => store.actions.getVisibleVersions(state),
     getCurrentVersion: () => store.actions.getCurrentVersion(state),
     getVersionById: (versionId) => store.actions.getVersionById(state, versionId),
+    setLocked: (locked) => {
+      setState(prev => store.actions.setLocked(prev, locked))
+    },
+    setAuditScenario: (scenario) => {
+      setState(prev => store.actions.setAuditScenario(prev, scenario))
+    },
+    dismissBanner: () => {
+      setState(prev => store.actions.dismissBanner(prev))
+    },
   }
 
   return (
