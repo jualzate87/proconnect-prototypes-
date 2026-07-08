@@ -214,7 +214,7 @@ export default function VersionEntry({ version }: VersionEntryProps) {
           )}
 
           <p className="restore-confirm-note">
-            We'll log this action in your activity log. You can redo it at any time.
+            We'll log this action in your audit log. You can redo it at any time.
           </p>
         </div>
 
@@ -271,7 +271,7 @@ export default function VersionEntry({ version }: VersionEntryProps) {
           )}
 
           <p className="restore-confirm-note">
-            The activity log will keep a record of this. You can restore to any version at any time.
+            The audit log will keep a record of this. You can restore to any version at any time.
           </p>
         </div>
 

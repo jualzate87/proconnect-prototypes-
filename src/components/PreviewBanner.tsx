@@ -96,7 +96,7 @@ export default function PreviewBanner() {
             </div>
           )}
           <p className="restore-confirm-note">
-            This will be recorded in the activity log. You can restore this change at any time.
+            This will be recorded in the audit log. You can restore this change at any time.
           </p>
         </div>
         <div className="restore-confirm-footer">
@@ -149,7 +149,7 @@ export default function PreviewBanner() {
           )}
 
           <p className="restore-confirm-note">
-            The activity log will keep a record of this. You can restore to any version at any time.
+            The audit log will keep a record of this. You can restore to any version at any time.
           </p>
         </div>
 

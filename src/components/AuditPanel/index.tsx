@@ -107,7 +107,7 @@ export default function AuditPanel({ onClose }: AuditPanelProps) {
     <div className="audit-panel">
       {/* Header */}
       <div className="audit-panel-header">
-        <h2 className="audit-panel-title">Activity log</h2>
+        <h2 className="audit-panel-title">Audit log</h2>
         <button className="audit-close-btn" onClick={onClose} title="Close panel">
           <svg viewBox="0 0 16 16" fill="none" width="14" height="14">
             <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
