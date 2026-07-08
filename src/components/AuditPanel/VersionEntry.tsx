@@ -179,7 +179,7 @@ export default function VersionEntry({ version }: VersionEntryProps) {
           <h2 className="locked-modal-title">Unlock this return to restore a version</h2>
           <p className="locked-modal-body-text">This return is locked. You need to unlock it to allow changes and restore a past version.</p>
         </div>
-        <div className="restore-confirm-footer">
+        <div className="restore-confirm-footer restore-confirm-footer--centered">
           <button className="modal-btn" onClick={() => setShowLockedModal(false)}>Cancel</button>
           <button className="modal-btn primary" onClick={() => { setLocked(false); setShowLockedModal(false) }}>Unlock return</button>
         </div>

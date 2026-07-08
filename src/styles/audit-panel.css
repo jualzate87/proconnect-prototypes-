@@ -1040,6 +1040,9 @@
   background: #ffffff;
   flex-shrink: 0;
 }
+.restore-confirm-footer--centered {
+  justify-content: center;
+}
 
 /* ─── Undo confirm table ─── */
 .undo-confirm-table {
