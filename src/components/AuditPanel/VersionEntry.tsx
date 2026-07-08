@@ -63,7 +63,6 @@ export default function VersionEntry({ version }: VersionEntryProps) {
   const {
     auditLog,
     previewVersionId,
-    previewVersion,
     revertToVersion,
     undoChange,
     isLocked,
@@ -132,7 +131,6 @@ export default function VersionEntry({ version }: VersionEntryProps) {
 
   // ── Action menu handlers ──────────────────────────────────────────────────
   const handlePreview        = () => { setShowTrowser(true); setShowMenu(false) }
-  const handleRevert         = () => { setShowRestoreConfirm(true); setShowMenu(false) }
   const handleConfirmRestore = () => { revertToVersion(version.id); setShowRestoreConfirm(false) }
   const handleUndoRequest    = () => {
     setShowMenu(false)

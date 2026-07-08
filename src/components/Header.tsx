@@ -81,7 +81,7 @@ export default function Header() {
 
           {/* Locked icon */}
           {isLocked && !isPreview && (
-            <svg className="header-lock-badge" viewBox="0 0 16 16" fill="none" width="16" height="16" title="Return is locked">
+            <svg className="header-lock-badge" viewBox="0 0 16 16" fill="none" width="16" height="16" aria-label="Return is locked" role="img">
               <rect x="3" y="7" width="10" height="8" rx="1.5" fill="currentColor" fillOpacity="0.12" stroke="currentColor" strokeWidth="1.4"/>
               <path d="M5.5 7V5a2.5 2.5 0 015 0v2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
               <circle cx="8" cy="11" r="1" fill="currentColor"/>
@@ -199,7 +199,7 @@ export default function Header() {
                     ) : (
                       <button
                         className="header-return-dropdown-item"
-                        onClick={() => { setShowReturnActions(false) }}
+                        onClick={() => { setLocked(true); setShowReturnActions(false) }}
                       >
                         <svg viewBox="0 0 16 16" fill="none" width="13" height="13">
                           <rect x="3" y="7" width="10" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.3"/>
