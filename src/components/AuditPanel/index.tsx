@@ -173,7 +173,7 @@ export default function AuditPanel({ onClose }: AuditPanelProps) {
       </div>
 
       {/* Filters — hide in error/empty scenarios or when locked */}
-      {auditScenario === 'with-entries' && !isLocked && <Filters hideAuthorFilter={true} />}
+      {auditScenario === 'with-entries' && <Filters hideAuthorFilter={true} />}
 
       {/* Content */}
       <div className="audit-panel-content">
@@ -223,7 +223,7 @@ export default function AuditPanel({ onClose }: AuditPanelProps) {
           </>
         )}
 
-        {auditScenario === 'with-entries' && !isLocked && (
+        {auditScenario === 'with-entries' && (
           <>
             {/* Page message — dismissible */}
             {!bannerDismissed && (
@@ -273,19 +273,6 @@ export default function AuditPanel({ onClose }: AuditPanelProps) {
           </div>
         )}
 
-        {isLocked && (
-          <div className="audit-locked-state">
-            <div className="audit-locked-icon">
-              <svg viewBox="0 0 24 24" fill="none" width="28" height="28">
-                <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-                <path d="M8 11V7a4 4 0 018 0v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                <circle cx="12" cy="16" r="1.5" fill="currentColor"/>
-              </svg>
-            </div>
-            <h3 className="audit-locked-title">Return is locked</h3>
-            <p className="audit-locked-desc">This return is locked. Unlock it from Return actions to view activity or make changes.</p>
-          </div>
-        )}
       </div>
     </div>
   )
