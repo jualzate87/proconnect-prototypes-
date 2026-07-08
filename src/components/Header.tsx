@@ -79,16 +79,13 @@ export default function Header() {
             </svg>
           )}
 
-          {/* Locked badge */}
+          {/* Locked icon */}
           {isLocked && !isPreview && (
-            <span className="header-lock-badge">
-              <svg viewBox="0 0 14 14" fill="none" width="11" height="11">
-                <rect x="2.5" y="6" width="9" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.3"/>
-                <path d="M4.5 6V4.5a2.5 2.5 0 015 0V6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-                <circle cx="7" cy="9.5" r="1" fill="currentColor"/>
-              </svg>
-              Locked
-            </span>
+            <svg className="header-lock-badge" viewBox="0 0 16 16" fill="none" width="16" height="16" title="Return is locked">
+              <rect x="3" y="7" width="10" height="8" rx="1.5" fill="currentColor" fillOpacity="0.12" stroke="currentColor" strokeWidth="1.4"/>
+              <path d="M5.5 7V5a2.5 2.5 0 015 0v2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+              <circle cx="8" cy="11" r="1" fill="currentColor"/>
+            </svg>
           )}
 
           <div className="header-client-sep" />
