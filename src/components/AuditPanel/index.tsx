@@ -190,7 +190,7 @@ export default function AuditPanel({ onClose }: AuditPanelProps) {
                 </div>
                 <div className="audit-page-message-body">
                   <p className="audit-page-message-title"><strong>Welcome to your new Audit log</strong></p>
-                  <p className="audit-page-message-text">We'll now automatically track <strong>data entry changes</strong> as you work. Tracking started on <strong>June 15, 2026</strong>, so updates made <strong>before this date won't appear.</strong></p>
+                  <p className="audit-page-message-text">We automatically track your data entry changes as you work. We started tracking on June 15, 2026, so you won't see changes made before this date.</p>
                 </div>
                 <button className="audit-page-message-close" onClick={dismissBanner} aria-label="Dismiss">
                   <svg viewBox="0 0 16 16" fill="none" width="12" height="12"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
@@ -217,7 +217,7 @@ export default function AuditPanel({ onClose }: AuditPanelProps) {
                 <path d="M40.8575 29.3213C42.2467 29.3203 43.605 29.7314 44.7605 30.5026C45.9159 31.2738 46.8167 32.3704 47.3488 33.6537C47.8809 34.9369 48.0203 36.3492 47.7496 37.7117C47.4788 39.0743 46.8099 40.3259 45.8276 41.3082C44.8453 42.2906 43.5937 42.9594 42.2311 43.2302C40.8686 43.501 39.4563 43.3615 38.173 42.8294C36.8897 42.2974 35.7931 41.3966 35.022 40.2411C34.2508 39.0856 33.8397 37.7273 33.8406 36.3381C33.8406 34.4771 34.5799 32.6924 35.8958 31.3765C37.2117 30.0605 38.9965 29.3213 40.8575 29.3213ZM40.8575 27.3391C39.0765 27.3391 37.3354 27.8673 35.8546 28.8569C34.3738 29.8465 33.2198 31.253 32.5384 32.8986C31.8571 34.5441 31.6791 36.3548 32.0269 38.1015C32.3747 39.8482 33.2327 41.4526 34.4925 42.7116C35.7522 43.9706 37.357 44.8278 39.1039 45.1746C40.8509 45.5215 42.6614 45.3425 44.3066 44.6602C45.9518 43.978 47.3576 42.8232 48.3464 41.3418C49.3352 39.8605 49.8624 38.1191 49.8614 36.3381C49.8575 33.9518 48.9075 31.6644 47.2196 29.9775C45.5317 28.2905 43.2438 27.3417 40.8575 27.3391Z" fill="#205EA3"/>
                 <path opacity="0.15" d="M43.8314 30.8325C44.3238 31.7459 44.5793 32.7681 44.5748 33.8058C44.5695 35.464 43.9074 37.0526 42.7335 38.2238C41.5595 39.3949 39.9694 40.0532 38.3111 40.0545C37.2735 40.0591 36.2513 39.8035 35.3379 39.3112C35.8005 40.1708 36.4575 40.9103 37.2566 41.4709C38.0558 42.0314 38.9748 42.3974 39.9405 42.5397C40.9062 42.682 41.8918 42.5966 42.8186 42.2904C43.7455 41.9841 44.5879 41.4655 45.2787 40.7759C45.9696 40.0863 46.4897 39.2448 46.7975 38.3185C47.1054 37.3922 47.1925 36.4067 47.0519 35.4408C46.9113 34.4749 46.5469 33.5552 45.9877 32.755C45.4286 31.9549 44.6902 31.2966 43.8314 30.8325Z" fill="#5DABFF"/>
               </svg>
-              <h3 className="audit-empty-title">No history to show yet</h3>
+              <h3 className="audit-empty-title">Your history will show here</h3>
               <p className="audit-empty-desc">Activities will appear here as soon as changes are made. This log tracks <strong>data entry updates from imports, APIs, and manual entries</strong> as you work on the return.</p>
             </div>
           </>
@@ -236,7 +236,7 @@ export default function AuditPanel({ onClose }: AuditPanelProps) {
                 </div>
                 <div className="audit-page-message-body">
                   <p className="audit-page-message-title"><strong>Welcome to your new Audit log</strong></p>
-                  <p className="audit-page-message-text">We'll now automatically track <strong>data entry changes</strong> as you work. Tracking started on <strong>June 15, 2026</strong>, so updates made <strong>before this date won't appear.</strong></p>
+                  <p className="audit-page-message-text">We automatically track your data entry changes as you work. We started tracking on June 15, 2026, so you won't see changes made before this date.</p>
                 </div>
                 <button className="audit-page-message-close" onClick={dismissBanner} aria-label="Dismiss">
                   <svg viewBox="0 0 16 16" fill="none" width="12" height="12"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
@@ -251,8 +251,8 @@ export default function AuditPanel({ onClose }: AuditPanelProps) {
                   <circle cx="20" cy="20" r="15" stroke="#d4d7dc" strokeWidth="1.5"/>
                   <path d="M20 13v7l4 4" stroke="#d4d7dc" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
-                <h3>No activity found</h3>
-                <p>Try adjusting your filters</p>
+                <h3>Your history will show here</h3>
+                <p>Activities will appear here as soon as changes are made. This log tracks data entry updates from imports, APIs, and manual entries as you work on the return.</p>
               </div>
             )}
           </>
