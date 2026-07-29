@@ -609,13 +609,6 @@
   border-radius: 8px;
 }
 
-/* ─── Source-target highlight — entry that was restored from ─── */
-.version-entry--source-target {
-  background: #f5f7fa;
-  border-left: 3px solid #c5d0dc;
-}
-.version-entry--source-target:hover { background: #edf0f5; }
-
 /* ─── Source reference chip (on revert/undo entries) ─── */
 .entry-source-ref {
   display: flex;

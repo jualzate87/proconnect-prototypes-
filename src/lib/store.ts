@@ -6,7 +6,7 @@ import {
   loadAuditLogFromStorage,
   saveTaxDataToStorage,
   loadTaxDataFromStorage,
-  generateChangeDescription,
+  generateVersionName,
   generateVersionId,
 } from './audit-utils'
 import { initialTaxData, createInitialAuditLog, SCHEMA_VER, getChangeTypeColor, SECTION_DISPLAY } from './mock-data'
@@ -158,18 +158,17 @@ export function createAppStore(_initialState: AppState) {
         const oldData = state.taxData
         const newData = { ...state.taxData, [section]: data }
 
+        const changedFields = Object.entries(data)
+          .filter(([key, value]) => (oldData[section] as any)?.[key] !== value)
+          .map(([key]) => `${section}.${key}`)
+
         const changes = createVersion(
           newData,
           oldData,
-          generateChangeDescription(
-            Object.entries(data).map(([key, value]) => ({
-              field: `${section}.${key}`,
-              oldValue: (oldData[section] as any)?.[key],
-              newValue: value
-            }))
-          ),
+          generateVersionName('manual_entry', changedFields),
           'manual_entry'
         )
+        changes.relatedFields = changedFields
 
         const newAuditLog = {
           ...state.auditLog,

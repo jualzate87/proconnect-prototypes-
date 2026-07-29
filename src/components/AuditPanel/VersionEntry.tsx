@@ -72,18 +72,6 @@ export default function VersionEntry({ version }: VersionEntryProps) {
   const isCurrent    = version.id === auditLog.currentVersionId
   const isPreviewing = previewVersionId === version.id
 
-  // Highlight source entry on hover of this restore/undo card
-  const handleSourceHoverOn  = () => {
-    if (!version.sourceVersionId) return
-    document.querySelector(`[data-version-id="${version.sourceVersionId}"]`)
-      ?.classList.add('version-entry--source-target')
-  }
-  const handleSourceHoverOff = () => {
-    if (!version.sourceVersionId) return
-    document.querySelector(`[data-version-id="${version.sourceVersionId}"]`)
-      ?.classList.remove('version-entry--source-target')
-  }
-
   const [showMenu, setShowMenu]                   = useState(false)
   const [showRestoreConfirm, setShowRestoreConfirm] = useState(false)
   const [showUndoConfirm, setShowUndoConfirm]     = useState(false)
@@ -295,8 +283,6 @@ export default function VersionEntry({ version }: VersionEntryProps) {
           isCurrent && !isPreviewing ? 'version-entry--current'    : '',
           isPreviewing               ? 'version-entry--previewing' : '',
         ].filter(Boolean).join(' ')}
-        onMouseEnter={handleSourceHoverOn}
-        onMouseLeave={handleSourceHoverOff}
       >
         <div className="entry-dot" style={{ background: typeColor }} />
 

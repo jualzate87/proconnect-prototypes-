@@ -242,6 +242,27 @@ const snap10: TaxReturnData = {
 
 export const initialTaxData: TaxReturnData = snap10
 
+const CHANGE_TYPE_NAME: Record<string, string> = {
+  manual_entry:    'Manual',
+  document_import: 'Import',
+  api_import:      'API',
+  revert:          'Restore',
+  copy:            'Copy',
+}
+
+// Mirrors generateVersionName in audit-utils.ts — duplicated here (rather than
+// imported) to avoid a circular import, since audit-utils reads SECTION_DISPLAY
+// from this file.
+function versionName(changeType: string, relatedFields: string[]): string {
+  const typeName = CHANGE_TYPE_NAME[changeType] || changeType
+  const sections = [...new Set(relatedFields.map(f => f.split('.')[0]))]
+    .map(key => SECTION_DISPLAY[key] || key)
+
+  if (sections.length === 0) return typeName
+  if (sections.length <= 2) return `${typeName} · ${sections.join(', ')}`
+  return `${typeName} · ${sections.length} sections`
+}
+
 export function createInitialAuditLog(): AuditLog {
   const now = Date.now()
 
@@ -253,7 +274,7 @@ export function createInitialAuditLog(): AuditLog {
       author: 'Jason Hansen',
       label: 'Bing Equipment W-2 Import',
       changeType: 'document_import',
-      description: 'Imported W-2 · Bing Equipment Inc.',
+      description: versionName('document_import', ['income.employerId']),
       dataSnapshot: snap1,
       changes: [
         { field: 'income.employerName',   oldValue: '',    newValue: 'Bing Equipment' },
@@ -277,7 +298,7 @@ export function createInitialAuditLog(): AuditLog {
       author: 'Sarah Miller',
       label: 'SE Income Entry',
       changeType: 'manual_entry',
-      description: 'Changed self-employment income',
+      description: versionName('manual_entry', ['income.seIncome']),
       dataSnapshot: snap2,
       changes: [
         { field: 'income.seIncome', oldValue: 0, newValue: 12500 },
@@ -291,7 +312,7 @@ export function createInitialAuditLog(): AuditLog {
       label: 'TaxDome Full Client Profile Import',
       changeType: 'api_import',
       apiSource: 'TaxDome',
-      description: 'API imported interest & dividend data',
+      description: versionName('api_import', ['income.employerId', 'interest.p1Name', 'investment.capitalGains', 'other.rentalIncome']),
       dataSnapshot: snap3,
       changes: [
         // Wages & Salaries — 10 fields
@@ -342,7 +363,7 @@ export function createInitialAuditLog(): AuditLog {
       author: 'Jason Hansen',
       label: 'Tech Circle W-2 Import',
       changeType: 'document_import',
-      description: 'Imported W-2 · Tech Circle Inc. (new employer tab)',
+      description: versionName('document_import', ['income.tcEmployerId']),
       dataSnapshot: snap4,
       changes: [
         { field: 'income.tcEmployerName',   oldValue: '', newValue: 'Tech Circle Inc' },
@@ -366,7 +387,7 @@ export function createInitialAuditLog(): AuditLog {
       author: 'Sarah Miller',
       label: 'Capital Gains Entry',
       changeType: 'manual_entry',
-      description: 'Changed capital gains — Investments',
+      description: versionName('manual_entry', ['investment.capitalGains']),
       dataSnapshot: snap5,
       changes: [
         { field: 'investment.capitalGains',   oldValue: 0,  newValue: 8200 },
@@ -382,7 +403,7 @@ export function createInitialAuditLog(): AuditLog {
       label: 'Alfred Dividend & Gains Update',
       changeType: 'api_import',
       apiSource: 'Alfred',
-      description: 'API imported dividend & short-term gains data',
+      description: versionName('api_import', ['interest.dividendIncome', 'investment.shortTermGains']),
       dataSnapshot: snap6,
       changes: [
         { field: 'interest.dividendIncome',   oldValue: 980,  newValue: 1240 },
@@ -402,7 +423,7 @@ export function createInitialAuditLog(): AuditLog {
       author: 'Sarah Miller',
       label: '1099-INT Citi Bank Import',
       changeType: 'document_import',
-      description: 'Imported 1099-INT · Citi Bank',
+      description: versionName('document_import', ['interest.p2Name']),
       dataSnapshot: snap7,
       changes: [
         { field: 'interest.p2Name',     oldValue: '',    newValue: 'Citi Bank' },
@@ -422,7 +443,7 @@ export function createInitialAuditLog(): AuditLog {
       author: 'David Hansen',
       label: 'Bing Equipment Wage Correction',
       changeType: 'manual_entry',
-      description: 'Changed W-2 wages · Bing Equipment',
+      description: versionName('manual_entry', ['income.w2Wages']),
       dataSnapshot: snap8,
       changes: [
         { field: 'income.w2Wages',       oldValue: 78420, newValue: 79150 },
@@ -443,7 +464,7 @@ export function createInitialAuditLog(): AuditLog {
       author: 'Sarah Miller',
       label: 'Rental Property Entry',
       changeType: 'manual_entry',
-      description: 'Changed rental property income & details',
+      description: versionName('manual_entry', ['other.rentalIncome']),
       dataSnapshot: snap9,
       changes: [
         { field: 'other.rentalIncome',    oldValue: 0,  newValue: 4800 },
@@ -463,7 +484,7 @@ export function createInitialAuditLog(): AuditLog {
       label: 'TaxDome K-1 Passive Income Import',
       changeType: 'api_import',
       apiSource: 'TaxDome',
-      description: 'API imported K-1 partnership income',
+      description: versionName('api_import', ['other.k1PartnerName']),
       dataSnapshot: snap10,
       changes: [
         { field: 'other.k1PartnerName', oldValue: '', newValue: 'Green Valley Partners LLC' },

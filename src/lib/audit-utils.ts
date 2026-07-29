@@ -1,7 +1,31 @@
-import { Version, TaxReturnData, Change, AuditLog } from '../types'
+import { Version, TaxReturnData, Change, AuditLog, ChangeType } from '../types'
+import { SECTION_DISPLAY } from './mock-data'
 
 export function generateVersionId(): string {
   return `v-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+}
+
+const CHANGE_TYPE_NAME: Record<ChangeType, string> = {
+  manual_entry:    'Manual',
+  document_import: 'Import',
+  api_import:      'API',
+  revert:          'Restore',
+  copy:            'Copy',
+}
+
+/**
+ * Version names are limited to what the system actually knows: which section
+ * was touched and how the entry was made (manual/import/API) — never the
+ * specific field or value, since that's more than the data model guarantees.
+ */
+export function generateVersionName(changeType: ChangeType, relatedFields: string[] = []): string {
+  const typeName = CHANGE_TYPE_NAME[changeType] || changeType
+  const sections = [...new Set(relatedFields.map(f => f.split('.')[0]))]
+    .map(key => SECTION_DISPLAY[key] || key)
+
+  if (sections.length === 0) return typeName
+  if (sections.length <= 2) return `${typeName} · ${sections.join(', ')}`
+  return `${typeName} · ${sections.length} sections`
 }
 
 export function createDiff(oldData: TaxReturnData, newData: TaxReturnData): Change[] {
@@ -37,16 +61,6 @@ export function createDiff(oldData: TaxReturnData, newData: TaxReturnData): Chan
   }
 
   return changes
-}
-
-export function generateChangeDescription(changes: Change[]): string {
-  if (changes.length === 0) return 'No changes'
-  if (changes.length === 1) {
-    const change = changes[0]
-    const fieldName = change.field.split('.')[1]
-    return `Updated ${fieldName}: ${change.oldValue} → ${change.newValue}`
-  }
-  return `Updated ${changes.length} fields`
 }
 
 export function formatRelativeTime(timestamp: number): string {
