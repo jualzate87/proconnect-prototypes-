@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom'
 import { Version } from '../types'
 import { AppContext, AppContextType } from '../lib/store'
 import { useAppContext } from '../index'
+import { getChangeTypeColor } from '../lib/mock-data'
+import { isUndoEntry } from '../lib/audit-utils'
 import Income from './InputScreens/Income'
 import Invest from './InputScreens/Invest'
 import Interest from './InputScreens/Interest'
@@ -63,14 +65,15 @@ export default function PreviewTrowser({ version, onClose }: PreviewTrowserProps
   const relatedFields = version.relatedFields ?? []
   const screen = getPrimarySection(relatedFields)
   const snapshot = version.dataSnapshot
+  const highlightColor = getChangeTypeColor(version.changeType, isUndoEntry(version))
 
-  // Build a context override: same as live ctx but with snapshot as displayTaxData
-  // and a non-null previewVersionId so all inputs render read-only
   const overrideCtx: AppContextType = {
     ...ctx,
     displayTaxData: snapshot,
     previewVersionId: version.id,
     currentScreen: screen,
+    highlightedFields: relatedFields,
+    highlightColor,
   }
 
   const content = (

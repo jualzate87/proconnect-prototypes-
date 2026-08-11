@@ -23,15 +23,33 @@ const TITLE_VERBS: Record<ChangeType, string> = {
   copy:            'Copied',
 }
 
-function sectionTitleNames(relatedFields: string[]): string[] {
-  return [...new Set(relatedFields.map(f => f.split('.')[0]))]
-    .map(key => SECTION_TITLE[key] || key)
+/** Primary section for a version — one section per entry */
+export function primarySectionKey(relatedFields: string[]): string | null {
+  if (!relatedFields.length) return null
+  return relatedFields[0].split('.')[0]
 }
 
-function formatSectionPhrase(sections: string[]): string {
-  if (sections.length === 0) return ''
-  if (sections.length <= 2) return sections.join(', ')
-  return `${sections.length} sections`
+export function primarySectionPhrase(relatedFields: string[]): string {
+  const key = primarySectionKey(relatedFields)
+  return key ? (SECTION_TITLE[key] || key) : ''
+}
+
+/** Keep only fields belonging to the version's primary section */
+export function fieldsForPrimarySection(relatedFields: string[]): string[] {
+  const primary = primarySectionKey(relatedFields)
+  if (!primary) return relatedFields
+  return relatedFields.filter(f => f.startsWith(`${primary}.`))
+}
+
+export function getVersionTitleParts(
+  version: Pick<Version, 'changeType' | 'description' | 'relatedFields'>,
+): { verb: string; sectionPhrase: string } {
+  const sectionPhrase = primarySectionPhrase(version.relatedFields ?? [])
+  if (isUndoEntry(version)) {
+    return { verb: 'Undid', sectionPhrase }
+  }
+  const verb = TITLE_VERBS[version.changeType as ChangeType] || version.changeType
+  return { verb, sectionPhrase }
 }
 
 /**
@@ -40,16 +58,16 @@ function formatSectionPhrase(sections: string[]): string {
  */
 export function generateVersionName(changeType: ChangeType, relatedFields: string[] = []): string {
   const verb = TITLE_VERBS[changeType] || changeType
-  const sections = sectionTitleNames(relatedFields)
-  if (sections.length === 0) return verb
-  return `${verb} ${formatSectionPhrase(sections)}`
+  const sectionPhrase = primarySectionPhrase(fieldsForPrimarySection(relatedFields))
+  if (!sectionPhrase) return verb
+  return `${verb} ${sectionPhrase}`
 }
 
-/** Undo titles: "Undid {section name(s)}" */
+/** Undo titles: "Undid {section name}" */
 export function generateUndoVersionName(relatedFields: string[] = []): string {
-  const sections = sectionTitleNames(relatedFields)
-  if (sections.length === 0) return 'Undid change'
-  return `Undid ${formatSectionPhrase(sections)}`
+  const sectionPhrase = primarySectionPhrase(fieldsForPrimarySection(relatedFields))
+  if (!sectionPhrase) return 'Undid change'
+  return `Undid ${sectionPhrase}`
 }
 
 export function isUndoEntry(version: Pick<Version, 'changeType' | 'description'>): boolean {

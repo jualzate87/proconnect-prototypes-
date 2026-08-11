@@ -155,7 +155,8 @@ export default function Others() {
         <div className="tax-row">
           <div className="tax-label">Entity EIN</div>
           <div className="tax-input-cell">
-            <input type="text" defaultValue="47-8821093" readOnly={isPreview} placeholder="00-0000000"/>
+            <input type="text" defaultValue="47-8821093" readOnly={isPreview}
+              style={inputStyle('k1EntityEin')} placeholder="00-0000000"/>
           </div>
         </div>
 
@@ -171,14 +172,16 @@ export default function Others() {
         <div className="tax-row">
           <div className="tax-label">(5) Interest income</div>
           <div className="tax-input-cell">
-            <input type="text" defaultValue="0" readOnly={isPreview} placeholder="0"/>
+            <input type="text" defaultValue="0" readOnly={isPreview}
+              style={inputStyle('k1Interest')} placeholder="0"/>
           </div>
         </div>
 
         <div className="tax-row">
           <div className="tax-label">(6a) Ordinary dividends</div>
           <div className="tax-input-cell">
-            <input type="text" defaultValue="0" readOnly={isPreview} placeholder="0"/>
+            <input type="text" defaultValue="0" readOnly={isPreview}
+              style={inputStyle('k1Dividends')} placeholder="0"/>
           </div>
         </div>
 

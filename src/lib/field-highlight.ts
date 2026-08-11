@@ -10,8 +10,8 @@ export function fieldInputHighlight(
 ): CSSProperties {
   if (!highlightColor || !highlightedFields.includes(fieldPath)) return {}
   return {
-    background: `${highlightColor}1a`,
     borderColor: highlightColor,
-    boxShadow: `inset 3px 0 0 ${highlightColor}`,
+    borderWidth: 2,
+    borderStyle: 'solid',
   }
 }

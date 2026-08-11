@@ -11,7 +11,7 @@ export default function K1s() {
   }
   function highlightStyle(fields: string[]): React.CSSProperties {
     return fields.some(f => highlightedFields.includes(f))
-      ? { background: highlightColor + '18', borderLeft: `3px solid ${highlightColor}` }
+      ? { borderColor: highlightColor, borderWidth: 2, borderStyle: 'solid' }
       : {}
   }
 

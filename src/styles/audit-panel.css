@@ -497,6 +497,11 @@
   word-break: break-word;
 }
 
+.entry-description-section {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
 /* Inline rename input — sits in place of .entry-description */
 .entry-rename-input {
   flex: 1;

@@ -38,9 +38,9 @@ export default function Dispositions() {
   const cellHighlight = (fieldKey: string): CSSProperties => {
     if (!highlightedFields.includes(fieldKey) || !highlightColor) return {}
     return {
-      background: `${highlightColor}1a`,
       borderColor: highlightColor,
-      boxShadow: `inset 3px 0 0 ${highlightColor}`,
+      borderWidth: 2,
+      borderStyle: 'solid',
     }
   }
 

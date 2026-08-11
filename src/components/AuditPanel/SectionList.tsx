@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Version } from '../../types'
 import { SECTION_DISPLAY, getChangeTypeColor } from '../../lib/mock-data'
-import { CHANGE_TYPE_LABELS, isUndoEntry } from '../../lib/audit-utils'
+import { CHANGE_TYPE_LABELS, isUndoEntry, primarySectionKey } from '../../lib/audit-utils'
 import { groupVersionsByTime } from '../../lib/time-groups'
 import VersionEntry from './VersionEntry'
 
@@ -25,19 +25,10 @@ function getSections(versions: Version[]): SectionSummary[] {
 
   for (const v of versions) {
     const fields = v.relatedFields ?? []
-    const sectionKeys = [...new Set(fields.map(f => f.split('.')[0]))]
+    const key = primarySectionKey(fields) ?? 'other'
 
-    if (sectionKeys.length === 0) {
-      // Entries with no relatedFields (e.g. revert/undo) — bucket by 'other'
-      const key = 'other'
-      if (!sectionMap[key]) sectionMap[key] = []
-      if (!sectionMap[key].includes(v)) sectionMap[key].push(v)
-    } else {
-      for (const key of sectionKeys) {
-        if (!sectionMap[key]) sectionMap[key] = []
-        sectionMap[key].push(v)
-      }
-    }
+    if (!sectionMap[key]) sectionMap[key] = []
+    if (!sectionMap[key].includes(v)) sectionMap[key].push(v)
   }
 
   return Object.entries(sectionMap)

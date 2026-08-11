@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { Version } from '../../types'
 import { useAppContext } from '../../index'
 import { getChangeTypeColor, SECTION_DISPLAY } from '../../lib/mock-data'
-import { CHANGE_TYPE_LABELS, isUndoEntry } from '../../lib/audit-utils'
+import { CHANGE_TYPE_LABELS, getVersionTitleParts, isUndoEntry } from '../../lib/audit-utils'
 import PreviewTrowser from '../PreviewTrowser'
 
 interface VersionEntryProps {
@@ -13,18 +13,6 @@ interface VersionEntryProps {
 function getTypeLabel(version: Version): string {
   if (isUndoEntry(version)) return CHANGE_TYPE_LABELS.undo
   return CHANGE_TYPE_LABELS[version.changeType] || version.changeType
-}
-
-function getSectionSummary(fields: string[]): Array<{ name: string; count: number }> {
-  const sections: Record<string, number> = {}
-  for (const f of fields) {
-    const s = f.split('.')[0]
-    sections[s] = (sections[s] || 0) + 1
-  }
-  return Object.entries(sections).map(([key, count]) => ({
-    name: SECTION_DISPLAY[key] || key,
-    count,
-  }))
 }
 
 function formatTimestamp(ts: number): string {
@@ -101,10 +89,9 @@ export default function VersionEntry({ version }: VersionEntryProps) {
   const isUndo    = isUndoEntry(version)
   const typeColor = getChangeTypeColor(version.changeType, isUndo)
   const typeLabel = getTypeLabel(version)
+  const { verb, sectionPhrase } = getVersionTitleParts(version)
 
-  const hasRelated = (version.relatedFields?.length ?? 0) > 0
   const hasChanges = (version.changes?.length ?? 0) > 0
-  const summary    = hasRelated ? getSectionSummary(version.relatedFields!) : []
 
   const canUndo = hasChanges &&
     version.changeType !== 'revert' &&
@@ -281,7 +268,16 @@ export default function VersionEntry({ version }: VersionEntryProps) {
 
         <div className="entry-body">
           <div className="entry-top">
-            <p className="entry-description">{version.description}</p>
+            <p className="entry-description">
+              {sectionPhrase ? (
+                <>
+                  {verb}{' '}
+                  <span className="entry-description-section">{sectionPhrase}</span>
+                </>
+              ) : (
+                version.description
+              )}
+            </p>
 
             <div className="entry-menu-wrap" ref={menuRef}>
               <button
@@ -338,16 +334,6 @@ export default function VersionEntry({ version }: VersionEntryProps) {
             <span className="entry-sep">·</span>
             <span className="entry-time">{formatTime(version.timestamp)}</span>
           </div>
-
-          {summary.length > 0 && (
-            <div className="entry-section-summary">
-              {summary.map(s => (
-                <span key={s.name} className="entry-section-chip">
-                  {s.name}
-                </span>
-              ))}
-            </div>
-          )}
 
           {isCurrent && <div className="entry-current-badge">Current</div>}
         </div>

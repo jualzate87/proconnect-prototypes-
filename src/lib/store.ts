@@ -9,6 +9,7 @@ import {
   generateVersionName,
   generateUndoVersionName,
   generateVersionId,
+  fieldsForPrimarySection,
 } from './audit-utils'
 import { initialTaxData, createInitialAuditLog, SCHEMA_VER, getChangeTypeColor, SECTION_DISPLAY } from './mock-data'
 
@@ -163,13 +164,15 @@ export function createAppStore(_initialState: AppState) {
           .filter(([key, value]) => (oldData[section] as any)?.[key] !== value)
           .map(([key]) => `${section}.${key}`)
 
+        const sectionFields = fieldsForPrimarySection(changedFields)
+
         const changes = createVersion(
           newData,
           oldData,
-          generateVersionName('manual_entry', changedFields),
+          generateVersionName('manual_entry', sectionFields),
           'manual_entry'
         )
-        changes.relatedFields = changedFields
+        changes.relatedFields = sectionFields
 
         const newAuditLog = {
           ...state.auditLog,

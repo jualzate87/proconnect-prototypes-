@@ -143,6 +143,12 @@
 .screen--preview .tax-input-cell input:focus,
 .screen--preview .tax-input-cell textarea:focus { border-color: var(--divider); box-shadow: none; }
 
+/* Preserve audit-log field highlight borders in preview */
+.screen--preview .tax-input-cell input[style*="border-color"],
+.screen--preview .tax-input-cell textarea[style*="border-color"] {
+  pointer-events: none;
+}
+
 .tax-label {
   flex: 0 0 45%;
   padding: 8px 14px;

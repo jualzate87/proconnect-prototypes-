@@ -1,7 +1,7 @@
 import { TaxReturnData, AuditLog, Version } from '../types'
 import { API_PURPLE_1100 } from './field-highlight'
 
-const SCHEMA_VERSION = 8
+const SCHEMA_VERSION = 9
 
 const HOUR = 3600000
 const DAY  = 86400000
@@ -265,12 +265,10 @@ function versionName(changeType: string, relatedFields: string[]): string {
     copy:            'Copied',
   }
   const verb = verbs[changeType] || changeType
-  const sections = [...new Set(relatedFields.map(f => f.split('.')[0]))]
-    .map(key => SECTION_TITLE[key] || key)
-
-  if (sections.length === 0) return verb
-  if (sections.length <= 2) return `${verb} ${sections.join(', ')}`
-  return `${verb} ${sections.length} sections`
+  const key = relatedFields[0]?.split('.')[0]
+  const sectionPhrase = key ? (SECTION_TITLE[key] || key) : ''
+  if (!sectionPhrase) return verb
+  return `${verb} ${sectionPhrase}`
 }
 
 export function createInitialAuditLog(): AuditLog {
@@ -320,10 +318,10 @@ export function createInitialAuditLog(): AuditLog {
       id: 'v3',
       timestamp: now - 20 * DAY,
       author: 'David Hansen',
-      label: 'TaxDome Full Client Profile Import',
+      label: 'TaxDome W-2 Import',
       changeType: 'api_import',
       apiSource: 'TaxDome',
-      description: versionName('api_import', ['income.employerId', 'interest.p1Name', 'investment.capitalGains', 'other.rentalIncome']),
+      description: versionName('api_import', ['income.employerId']),
       dataSnapshot: snap3,
       changes: [
         // Wages & Salaries — 10 fields
@@ -359,11 +357,7 @@ export function createInitialAuditLog(): AuditLog {
         'income.employerId', 'income.employerName', 'income.streetAddress',
         'income.city', 'income.state', 'income.zip',
         'income.w2Wages', 'income.fedTaxWithheld', 'income.ssWages', 'income.ssTaxWithheld',
-        'interest.p1Name', 'interest.p1EIN', 'interest.p1Interest', 'interest.p1FedTax',
-        'interest.dividendIncome', 'interest.qualifiedDividends',
-        'interest.interestIncome', 'interest.sources',
-        'investment.capitalGains', 'investment.shortTermGains', 'investment.stockSales',
-        'other.rentalIncome', 'other.rentalExpenses', 'other.propertyAddress',
+        'income.medicareWages', 'income.medicareTax',
       ],
     },
 
@@ -414,7 +408,7 @@ export function createInitialAuditLog(): AuditLog {
       label: 'Alfred Dividend & Gains Update',
       changeType: 'api_import',
       apiSource: 'Alfred',
-      description: versionName('api_import', ['interest.dividendIncome', 'investment.shortTermGains']),
+      description: versionName('api_import', ['interest.dividendIncome']),
       dataSnapshot: snap6,
       changes: [
         { field: 'interest.dividendIncome',   oldValue: 980,  newValue: 1240 },
@@ -423,7 +417,6 @@ export function createInitialAuditLog(): AuditLog {
       ],
       relatedFields: [
         'interest.dividendIncome', 'interest.qualifiedDividends',
-        'investment.shortTermGains',
       ],
     },
 
@@ -501,7 +494,10 @@ export function createInitialAuditLog(): AuditLog {
         { field: 'other.k1PartnerName', oldValue: '', newValue: 'Green Valley Partners LLC' },
         { field: 'other.passiveIncome', oldValue: 0,  newValue: 2200 },
       ],
-      relatedFields: ['other.k1PartnerName', 'other.passiveIncome'],
+      relatedFields: [
+        'other.k1PartnerName', 'other.k1EntityEin',
+        'other.passiveIncome', 'other.k1Interest', 'other.k1Dividends',
+      ],
     },
 
     // ── Past 2 weeks (8–14 days ago) ──────────────────────────────────────────
