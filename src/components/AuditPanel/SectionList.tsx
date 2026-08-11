@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Version } from '../../types'
 import { SECTION_DISPLAY, getChangeTypeColor } from '../../lib/mock-data'
+import { CHANGE_TYPE_LABELS, isUndoEntry } from '../../lib/audit-utils'
+import { groupVersionsByTime } from '../../lib/time-groups'
 import VersionEntry from './VersionEntry'
 
 const PAGE_SIZE = 20
@@ -42,8 +44,7 @@ function getSections(versions: Version[]): SectionSummary[] {
     .map(([key, sectionVersions]) => {
       const sorted = [...sectionVersions].sort((a, b) => b.timestamp - a.timestamp)
       const types = [...new Set(sorted.map(v => {
-        const isUndo = v.changeType === 'revert' && v.label.startsWith('Undid:')
-        return isUndo ? 'undo' : v.changeType
+        return isUndoEntry(v) ? 'undo' : v.changeType
       }))]
       return {
         key,
@@ -70,14 +71,7 @@ function formatRelativeDate(ts: number): string {
   return new Date(ts).toLocaleDateString([], { month: 'short', day: 'numeric' })
 }
 
-const TYPE_LABELS: Record<string, string> = {
-  manual_entry:    'Manual',
-  document_import: 'Import',
-  api_import:      'API',
-  revert:          'Restore',
-  undo:            'Undo',
-  copy:            'Copy',
-}
+const TYPE_LABELS = CHANGE_TYPE_LABELS
 
 interface SectionRowProps {
   section: SectionSummary
@@ -128,41 +122,11 @@ interface DrillDownProps {
   onBack: () => void
 }
 
-const TIME_GROUP_ORDER = [
-  'Today', 'Yesterday', 'Last 7 days', 'Last 2 weeks', 'Last 30 days',
-  'Last 90 days', 'This year', 'Last year', 'Older',
-]
-
-function getTimeGroup(timestamp: number): string {
-  const DAY = 86400000
-  const now = new Date()
-  const todayStart = new Date(now); todayStart.setHours(0, 0, 0, 0)
-  const todayMs = todayStart.getTime()
-  if (timestamp >= todayMs)              return 'Today'
-  if (timestamp >= todayMs - DAY)        return 'Yesterday'
-  if (timestamp >= todayMs - 7  * DAY)  return 'Last 7 days'
-  if (timestamp >= todayMs - 14 * DAY)  return 'Last 2 weeks'
-  if (timestamp >= todayMs - 30 * DAY)  return 'Last 30 days'
-  if (timestamp >= todayMs - 90 * DAY)  return 'Last 90 days'
-  const entryYear = new Date(timestamp).getFullYear()
-  const currentYear = now.getFullYear()
-  if (entryYear === currentYear)     return 'This year'
-  if (entryYear === currentYear - 1) return 'Last year'
-  return 'Older'
-}
-
 function DrillDown({ section, onBack }: DrillDownProps) {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const visible = section.versions.slice(0, visibleCount)
   const hasMore = visibleCount < section.versions.length
-
-  const groups: Record<string, Version[]> = {}
-  for (const v of visible) {
-    const g = getTimeGroup(v.timestamp)
-    if (!groups[g]) groups[g] = []
-    groups[g].push(v)
-  }
-  const activeGroups = TIME_GROUP_ORDER.filter(g => groups[g]?.length)
+  const timeGroups = groupVersionsByTime(visible)
 
   return (
     <div className="section-drilldown">
@@ -177,10 +141,10 @@ function DrillDown({ section, onBack }: DrillDownProps) {
         <span className="section-drilldown-count">{section.changeCount} {section.changeCount === 1 ? 'change' : 'changes'}</span>
       </div>
       <div className="version-list">
-        {activeGroups.map(groupName => (
-          <div key={groupName} className="activity-group">
-            <div className="activity-group-label">{groupName}</div>
-            {groups[groupName].map(v => (
+        {timeGroups.map(group => (
+          <div key={group.key} className="activity-group">
+            <div className="activity-group-label">{group.label}</div>
+            {group.items.map(v => (
               <VersionEntry key={v.id} version={v} />
             ))}
           </div>

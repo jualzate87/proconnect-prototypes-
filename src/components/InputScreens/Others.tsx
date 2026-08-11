@@ -1,8 +1,9 @@
 import { useAppContext } from '../../index'
+import { fieldInputHighlight } from '../../lib/field-highlight'
 import '../../styles/input-screens.css'
 
 export default function Others() {
-  const { displayTaxData, updateTaxData, previewVersionId } = useAppContext()
+  const { displayTaxData, updateTaxData, previewVersionId, highlightedFields, highlightColor } = useAppContext()
   const other = displayTaxData.other || {
     propertyAddress: '', propertyCity: '', propertyState: '',
     daysRented: 0, rentalIncome: 0, rentalExpenses: 0,
@@ -18,7 +19,8 @@ export default function Others() {
     updateTaxData('other', { ...other, [field]: parsed })
   }
 
-  const inputStyle = (_fieldKey: string) => ({})
+  const inputStyle = (field: string) =>
+    fieldInputHighlight(`other.${field}`, highlightedFields, highlightColor)
 
   const netRental = (other.rentalIncome || 0) - (other.rentalExpenses || 0)
 

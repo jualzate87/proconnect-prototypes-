@@ -257,7 +257,60 @@
 }
 .filter-clear-btn:hover { color: var(--text-primary); background: var(--bg-hover); }
 
-/* ─── Date range picker dropdown ─── */
+/* ─── Active filter chips (IDS filter-chip pattern) ─── */
+.audit-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.audit-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 4px 8px 4px 10px;
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  line-height: 1.3;
+}
+
+.audit-filter-chip-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.audit-filter-chip-text strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.audit-filter-chip-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  border-radius: 50%;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+}
+
+.audit-filter-chip-remove:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
 .date-range-dropdown {
   min-width: 220px;
   padding: 12px 14px 10px;
@@ -363,9 +416,10 @@
 .activity-group { display: flex; flex-direction: column; }
 
 .activity-group-label {
-  padding: 16px 16px 24px;
-  font-size: 16px;
+  padding: 16px 16px 12px;
+  font-size: 14px;
   font-weight: 500;
+  line-height: 1.4;
   color: var(--text-primary);
   background: var(--bg-white);
 }

@@ -1,37 +1,64 @@
 import { Version, TaxReturnData, Change, AuditLog, ChangeType } from '../types'
-import { SECTION_DISPLAY } from './mock-data'
+import { SECTION_TITLE } from './mock-data'
 
 export function generateVersionId(): string {
   return `v-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 }
 
-const CHANGE_TYPE_NAME: Record<ChangeType, string> = {
-  manual_entry:    'Manual',
+/** Source-type labels for entry badges (not title verbs) */
+export const CHANGE_TYPE_LABELS: Record<string, string> = {
+  manual_entry:    'Manual Entry',
   document_import: 'Import',
   api_import:      'API',
   revert:          'Restore',
+  undo:            'Undo',
   copy:            'Copy',
 }
 
+const TITLE_VERBS: Record<ChangeType, string> = {
+  manual_entry:    'Updated',
+  document_import: 'Imported',
+  api_import:      'Transferred',
+  revert:          'Restored',
+  copy:            'Copied',
+}
+
+function sectionTitleNames(relatedFields: string[]): string[] {
+  return [...new Set(relatedFields.map(f => f.split('.')[0]))]
+    .map(key => SECTION_TITLE[key] || key)
+}
+
+function formatSectionPhrase(sections: string[]): string {
+  if (sections.length === 0) return ''
+  if (sections.length <= 2) return sections.join(', ')
+  return `${sections.length} sections`
+}
+
 /**
- * Version names are limited to what the system actually knows: which section
- * was touched and how the entry was made (manual/import/API) — never the
- * specific field or value, since that's more than the data model guarantees.
+ * Entry titles: "{verb} {section name(s)}" — e.g. "Updated rental and other income".
+ * Verbs: Updated | Imported | Transferred | Restored | Copied
  */
 export function generateVersionName(changeType: ChangeType, relatedFields: string[] = []): string {
-  const typeName = CHANGE_TYPE_NAME[changeType] || changeType
-  const sections = [...new Set(relatedFields.map(f => f.split('.')[0]))]
-    .map(key => SECTION_DISPLAY[key] || key)
+  const verb = TITLE_VERBS[changeType] || changeType
+  const sections = sectionTitleNames(relatedFields)
+  if (sections.length === 0) return verb
+  return `${verb} ${formatSectionPhrase(sections)}`
+}
 
-  if (sections.length === 0) return typeName
-  if (sections.length <= 2) return `${typeName} · ${sections.join(', ')}`
-  return `${typeName} · ${sections.length} sections`
+/** Undo titles: "Undid {section name(s)}" */
+export function generateUndoVersionName(relatedFields: string[] = []): string {
+  const sections = sectionTitleNames(relatedFields)
+  if (sections.length === 0) return 'Undid change'
+  return `Undid ${formatSectionPhrase(sections)}`
+}
+
+export function isUndoEntry(version: Pick<Version, 'changeType' | 'description'>): boolean {
+  return version.changeType === 'revert' && version.description.startsWith('Undid ')
 }
 
 export function createDiff(oldData: TaxReturnData, newData: TaxReturnData): Change[] {
   const changes: Change[] = []
 
-  // Deep comparison of all fields
   const allKeys = new Set([
     ...Object.keys(oldData || {}),
     ...Object.keys(newData || {})

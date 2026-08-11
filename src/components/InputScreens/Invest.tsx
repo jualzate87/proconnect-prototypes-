@@ -1,8 +1,9 @@
 import { useAppContext } from '../../index'
+import { fieldInputHighlight } from '../../lib/field-highlight'
 import '../../styles/input-screens.css'
 
 export default function Invest() {
-  const { displayTaxData, updateTaxData, previewVersionId } = useAppContext()
+  const { displayTaxData, updateTaxData, previewVersionId, highlightedFields, highlightColor } = useAppContext()
   const investment = displayTaxData.investment || { capitalGains: 0, shortTermGains: 0, stockSales: '', notes: '' }
 
   const isPreview = !!previewVersionId
@@ -14,7 +15,8 @@ export default function Invest() {
     updateTaxData('investment', { ...investment, [field]: parsed })
   }
 
-  const inputStyle = (_fieldKey: string) => ({})
+  const inputStyle = (field: string) =>
+    fieldInputHighlight(`investment.${field}`, highlightedFields, highlightColor)
 
   return (
     <div className={`screen${isPreview ? ' screen--preview' : ''}`}>

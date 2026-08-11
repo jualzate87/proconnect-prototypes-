@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useAppContext } from '../../index'
+import { fieldInputHighlight } from '../../lib/field-highlight'
 import '../../styles/input-screens.css'
 
 type PayerTab = 'p1' | 'p2'
 
 export default function Interest() {
-  const { displayTaxData, updateTaxData, previewVersionId } = useAppContext()
+  const { displayTaxData, updateTaxData, previewVersionId, highlightedFields, highlightColor } = useAppContext()
   const [activeTab, setActiveTab] = useState<PayerTab>('p1')
 
   const interest = displayTaxData.interest || {
@@ -24,7 +25,8 @@ export default function Interest() {
     updateTaxData('interest', { ...interest, [field]: parsed })
   }
 
-  const inputStyle = (_fieldKey: string) => ({})
+  const inputStyle = (field: string) =>
+    fieldInputHighlight(`interest.${field}`, highlightedFields, highlightColor)
 
   const p1Label = interest.p1Name || 'First Federal Savings'
   const p2Label = interest.p2Name || 'Citi Bank'

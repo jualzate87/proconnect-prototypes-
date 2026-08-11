@@ -7,6 +7,7 @@ import {
   saveTaxDataToStorage,
   loadTaxDataFromStorage,
   generateVersionName,
+  generateUndoVersionName,
   generateVersionId,
 } from './audit-utils'
 import { initialTaxData, createInitialAuditLog, SCHEMA_VER, getChangeTypeColor, SECTION_DISPLAY } from './mock-data'
@@ -308,14 +309,10 @@ export function createAppStore(_initialState: AppState) {
         const sourceVersion = state.auditLog.versions.find(v => v.id === versionId)
         if (!sourceVersion) return state
 
-        const sourceDate = new Date(sourceVersion.timestamp)
-        const sourceDateStr = sourceDate.toLocaleDateString([], { month: 'short', day: 'numeric' })
-        const sourceTimeStr = sourceDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-
         const revertVersion = createVersion(
           sourceVersion.dataSnapshot,
           state.taxData,
-          `Restored to "${sourceVersion.description}" · ${sourceDateStr} at ${sourceTimeStr}`,
+          generateVersionName('revert', sourceVersion.relatedFields ?? []),
           'revert'
         )
         revertVersion.author = 'You'
@@ -361,17 +358,15 @@ export function createAppStore(_initialState: AppState) {
           }
         }
 
-        const versionDate = new Date(version.timestamp)
-        const versionDateStr = versionDate.toLocaleDateString([], { month: 'short', day: 'numeric' })
-        const versionTimeStr = versionDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        const undoDescription = generateUndoVersionName(version.relatedFields ?? [])
 
         const undoEntry: Version = {
           id: generateVersionId(),
           timestamp: Date.now(),
           author: 'You',
-          label: `Undid: ${version.label}`,
+          label: undoDescription,
           changeType: 'revert',
-          description: `Undid "${version.description}" · ${versionDateStr} at ${versionTimeStr}`,
+          description: undoDescription,
           dataSnapshot: newData,
           changes: version.changes.map(c => ({ field: c.field, oldValue: c.newValue, newValue: c.oldValue })),
           relatedFields: version.relatedFields,
@@ -393,7 +388,7 @@ export function createAppStore(_initialState: AppState) {
           ...state,
           taxData: newData,
           auditLog: newAuditLog,
-          toast: `Undid "${version.label}"`,
+          toast: undoDescription,
         }
       },
 

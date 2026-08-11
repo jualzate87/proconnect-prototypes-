@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useAppContext } from '../../index'
+import { fieldInputHighlight } from '../../lib/field-highlight'
 import '../../styles/input-screens.css'
 
 type TabId = 'bing' | 'techcircle'
 
 export default function Income() {
-  const { displayTaxData, updateTaxData, previewVersionId } = useAppContext()
+  const { displayTaxData, updateTaxData, previewVersionId, highlightedFields, highlightColor } = useAppContext()
   const [activeTab, setActiveTab] = useState<TabId>('bing')
 
   const income = displayTaxData.income || {
@@ -31,7 +32,8 @@ export default function Income() {
     updateTaxData('income', { ...income, [field]: parsed })
   }
 
-  const inputStyle = (_fieldKey: string) => ({})
+  const inputStyle = (field: string) =>
+    fieldInputHighlight(`income.${field}`, highlightedFields, highlightColor)
 
   return (
     <div className={`screen${isPreview ? ' screen--preview' : ''}`}>

@@ -317,7 +317,7 @@ export default function TaxMappingPortal({ onClose }: Props) {
               <span className="tm-prefix-multi">
                 1+
                 <span className="tm-affix-info-anchor">
-                  <svg className="tm-affix-info-icon" viewBox="0 0 14 14" fill="none" width="12" height="12">
+                  <svg className="tm-affix-info-icon" viewBox="0 0 14 14" fill="none" width="10" height="10">
                     <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.2"/>
                     <path d="M7 6.5v4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
                     <circle cx="7" cy="4.5" r="0.7" fill="currentColor"/>
@@ -358,7 +358,7 @@ export default function TaxMappingPortal({ onClose }: Props) {
               <span className="tm-suffix-multi">
                 1000+
                 <span className="tm-affix-info-anchor">
-                  <svg className="tm-affix-info-icon" viewBox="0 0 14 14" fill="none" width="12" height="12">
+                  <svg className="tm-affix-info-icon" viewBox="0 0 14 14" fill="none" width="10" height="10">
                     <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.2"/>
                     <path d="M7 6.5v4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
                     <circle cx="7" cy="4.5" r="0.7" fill="currentColor"/>

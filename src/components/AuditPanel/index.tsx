@@ -17,7 +17,7 @@ function exportCSV(
   mode: ExportMode
 ) {
   const LABELS: Record<string, string> = {
-    manual_entry: 'Manual', document_import: 'Document import',
+    manual_entry: 'Manual Entry', document_import: 'Import',
     api_import: 'API', revert: 'Restore', copy: 'Copy',
   }
 

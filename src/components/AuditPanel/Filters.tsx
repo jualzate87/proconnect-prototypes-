@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useAppContext } from '../../index'
+import { formatFilterDateRange } from '../../lib/time-groups'
 
 function toDateInputValue(ts: number): string {
   return new Date(ts).toISOString().slice(0, 10)
@@ -33,9 +34,9 @@ export default function Filters({ hideAuthorFilter = false }: FiltersProps) {
 
   const ACTIVITY_OPTIONS = [
     { label: 'All activity',      value: '' },
-    { label: 'Manual entry',      value: 'manual_entry' },
-    { label: 'Document import',   value: 'document_import' },
-    { label: 'API import',        value: 'api_import' },
+    { label: 'Manual Entry',      value: 'manual_entry' },
+    { label: 'Import',            value: 'document_import' },
+    { label: 'API',               value: 'api_import' },
   ]
 
   // Sync draft fields when opening the date picker
@@ -74,16 +75,6 @@ export default function Filters({ hideAuthorFilter = false }: FiltersProps) {
     setDateOpen(false)
   }
 
-  const activeDateLabel = (() => {
-    if (!filters.dateFrom && !filters.dateTo) return null
-    const from = filters.dateFrom ? toDateInputValue(filters.dateFrom) : ''
-    const to   = filters.dateTo   ? toDateInputValue(filters.dateTo)   : ''
-    if (from && to)  return `${from} – ${to}`
-    if (from)        return `From ${from}`
-    if (to)          return `Until ${to}`
-    return null
-  })()
-
   // ── Author pill logic ─────────────────────────────────────────────────────
   const selectAuthor = (author: string) => {
     setFilters({ ...filters, author: author || undefined })
@@ -101,7 +92,41 @@ export default function Filters({ hideAuthorFilter = false }: FiltersProps) {
     setFilters({ ...filters, searchQuery: e.target.value || undefined })
   }
 
-  const hasFilters = filters.dateFrom || filters.dateTo || filters.author || filters.changeType
+  const hasDateFilter = Boolean(filters.dateFrom || filters.dateTo)
+  const dateChipValue = formatFilterDateRange(filters.dateFrom, filters.dateTo)
+
+  const hasFilters = hasDateFilter || filters.author || filters.changeType
+
+  const activityChipLabel = filters.changeType
+    ? ACTIVITY_OPTIONS.find(o => o.value === filters.changeType)?.label
+    : null
+
+  const activeFilterChips: { id: string; label: string; value: string; onRemove: () => void }[] = []
+
+  if (dateChipValue) {
+    activeFilterChips.push({
+      id: 'date',
+      label: 'Date:',
+      value: dateChipValue,
+      onRemove: clearDateRange,
+    })
+  }
+  if (activityChipLabel) {
+    activeFilterChips.push({
+      id: 'activity',
+      label: 'Activity:',
+      value: activityChipLabel,
+      onRemove: () => setFilters({ ...filters, changeType: undefined }),
+    })
+  }
+  if (filters.author) {
+    activeFilterChips.push({
+      id: 'author',
+      label: 'Author:',
+      value: filters.author,
+      onRemove: () => setFilters({ ...filters, author: undefined }),
+    })
+  }
 
   function Chevron() {
     return (
@@ -156,21 +181,16 @@ export default function Filters({ hideAuthorFilter = false }: FiltersProps) {
         {/* Date range */}
         <div className="filter-pill-wrap" ref={dateRef}>
           <button
-            className={`filter-pill${activeDateLabel ? ' filter-pill--active' : ''}`}
+            className={`filter-pill${hasDateFilter ? ' filter-pill--active' : ''}`}
             onClick={openDatePicker}
-            title={activeDateLabel || undefined}
+            title={dateChipValue || 'Filter by date range'}
           >
             <svg viewBox="0 0 12 12" fill="none" width="10" height="10" style={{ flexShrink: 0 }}>
               <rect x="1" y="2" width="10" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.2"/>
               <path d="M4 1v2M8 1v2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
               <path d="M1 5h10" stroke="currentColor" strokeWidth="1.2"/>
             </svg>
-            <span className="filter-pill-date-label">
-              {activeDateLabel
-                ? <span className="filter-pill-date-short">{activeDateLabel}</span>
-                : 'Date range'
-              }
-            </span>
+            <span className="filter-pill-date-label">Date range</span>
             <Chevron />
           </button>
 
@@ -213,7 +233,7 @@ export default function Filters({ hideAuthorFilter = false }: FiltersProps) {
             className={`filter-pill${filters.author ? ' filter-pill--active' : ''}`}
             onClick={() => { setAuthorOpen(!authorOpen); setDateOpen(false); setActivityOpen(false) }}
           >
-            <span>{filters.author || 'Author'}</span>
+            <span>Author</span>
             <Chevron />
           </button>
           {authorOpen && (
@@ -246,7 +266,7 @@ export default function Filters({ hideAuthorFilter = false }: FiltersProps) {
             className={`filter-pill${filters.changeType ? ' filter-pill--active' : ''}`}
             onClick={() => { setActivityOpen(!activityOpen); setDateOpen(false); setAuthorOpen(false) }}
           >
-            <span>{filters.changeType ? ACTIVITY_OPTIONS.find(o => o.value === filters.changeType)?.label : 'Activity'}</span>
+            <span>Activity</span>
             <Chevron />
           </button>
           {activityOpen && (
@@ -277,6 +297,28 @@ export default function Filters({ hideAuthorFilter = false }: FiltersProps) {
           </button>
         )}
       </div>
+
+      {activeFilterChips.length > 0 && (
+        <div className="audit-filter-chips" aria-label="Active filters">
+          {activeFilterChips.map(chip => (
+            <div key={chip.id} className="audit-filter-chip">
+              <span className="audit-filter-chip-text">
+                {chip.label} <strong>{chip.value}</strong>
+              </span>
+              <button
+                type="button"
+                className="audit-filter-chip-remove"
+                onClick={chip.onRemove}
+                aria-label={`Remove ${chip.label} ${chip.value} filter`}
+              >
+                <svg viewBox="0 0 12 12" fill="none" width="10" height="10" aria-hidden="true">
+                  <path d="M2 2l8 8M10 2L2 10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

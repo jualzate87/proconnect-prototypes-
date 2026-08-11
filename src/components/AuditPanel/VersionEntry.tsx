@@ -3,22 +3,15 @@ import { createPortal } from 'react-dom'
 import { Version } from '../../types'
 import { useAppContext } from '../../index'
 import { getChangeTypeColor, SECTION_DISPLAY } from '../../lib/mock-data'
+import { CHANGE_TYPE_LABELS, isUndoEntry } from '../../lib/audit-utils'
 import PreviewTrowser from '../PreviewTrowser'
 
 interface VersionEntryProps {
   version: Version
 }
 
-const CHANGE_TYPE_LABELS: Record<string, string> = {
-  manual_entry:    'Manual',
-  document_import: 'Import',
-  api_import:      'API',
-  revert:          'Restore',
-  copy:            'Copy',
-}
-
 function getTypeLabel(version: Version): string {
-  if (version.changeType === 'revert' && version.label.startsWith('Undid:')) return 'Undo'
+  if (isUndoEntry(version)) return CHANGE_TYPE_LABELS.undo
   return CHANGE_TYPE_LABELS[version.changeType] || version.changeType
 }
 
@@ -105,7 +98,7 @@ export default function VersionEntry({ version }: VersionEntryProps) {
 
   // Trowser is handled by PreviewTrowser's own Escape listener
 
-  const isUndo    = version.changeType === 'revert' && version.label.startsWith('Undid:')
+  const isUndo    = isUndoEntry(version)
   const typeColor = getChangeTypeColor(version.changeType, isUndo)
   const typeLabel = getTypeLabel(version)
 
@@ -323,7 +316,7 @@ export default function VersionEntry({ version }: VersionEntryProps) {
                 <path d="M2.5 6a3.5 3.5 0 103.5-3.5H3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
                 <path d="M3 4L1 6l2 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              <span>{sourceVersion.description.split(' · ')[0]}</span>
+              <span>{sourceVersion.description}</span>
               <span className="entry-source-ref-time">
                 · {formatTime(sourceVersion.timestamp)}
               </span>

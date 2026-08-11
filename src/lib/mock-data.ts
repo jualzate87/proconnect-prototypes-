@@ -1,6 +1,7 @@
 import { TaxReturnData, AuditLog, Version } from '../types'
+import { API_PURPLE_1100 } from './field-highlight'
 
-const SCHEMA_VERSION = 6
+const SCHEMA_VERSION = 8
 
 const HOUR = 3600000
 const DAY  = 86400000
@@ -9,7 +10,7 @@ const DAY  = 86400000
 export const CHANGE_TYPE_COLORS: Record<string, string> = {
   manual_entry:    '#5d686f', // neutral/pepper/80 — human entry
   document_import: '#00856d', // primary/spearmint/80 — native import
-  api_import:      '#205ea3', // primary/blueberry/80 — API/automated
+  api_import:      API_PURPLE_1100, // purple/1100 — API/automated
   revert:          '#c2600a', // warm orange — restore is consequential
   undo:            '#475569', // slate — directional, not alarming
   copy:            '#5d686f', // neutral
@@ -115,6 +116,16 @@ export const SECTION_DISPLAY: Record<string, string> = {
   other:        'Rental & Other Income',
   dispositions: 'Dispositions (Schedule D)',
   k1:           'Passthrough K-1s',
+}
+
+/** Lowercase section names for audit log entry titles */
+export const SECTION_TITLE: Record<string, string> = {
+  income:       'wages and salaries',
+  investment:   'capital gains and losses',
+  interest:     'interest and dividends',
+  other:        'rental and other income',
+  dispositions: 'dispositions (schedule d)',
+  k1:           'passthrough k-1s',
 }
 
 // ── Base empty snapshot ───────────────────────────────────────────────────────
@@ -242,29 +253,29 @@ const snap10: TaxReturnData = {
 
 export const initialTaxData: TaxReturnData = snap10
 
-const CHANGE_TYPE_NAME: Record<string, string> = {
-  manual_entry:    'Manual',
-  document_import: 'Import',
-  api_import:      'API',
-  revert:          'Restore',
-  copy:            'Copy',
-}
-
 // Mirrors generateVersionName in audit-utils.ts — duplicated here (rather than
-// imported) to avoid a circular import, since audit-utils reads SECTION_DISPLAY
+// imported) to avoid a circular import, since audit-utils reads SECTION_TITLE
 // from this file.
 function versionName(changeType: string, relatedFields: string[]): string {
-  const typeName = CHANGE_TYPE_NAME[changeType] || changeType
+  const verbs: Record<string, string> = {
+    manual_entry:    'Updated',
+    document_import: 'Imported',
+    api_import:      'Transferred',
+    revert:          'Restored',
+    copy:            'Copied',
+  }
+  const verb = verbs[changeType] || changeType
   const sections = [...new Set(relatedFields.map(f => f.split('.')[0]))]
-    .map(key => SECTION_DISPLAY[key] || key)
+    .map(key => SECTION_TITLE[key] || key)
 
-  if (sections.length === 0) return typeName
-  if (sections.length <= 2) return `${typeName} · ${sections.join(', ')}`
-  return `${typeName} · ${sections.length} sections`
+  if (sections.length === 0) return verb
+  if (sections.length <= 2) return `${verb} ${sections.join(', ')}`
+  return `${verb} ${sections.length} sections`
 }
 
 export function createInitialAuditLog(): AuditLog {
   const now = Date.now()
+  const currentYear = new Date(now).getFullYear()
 
   const versions: Version[] = [
     // ── Last 30 days ─────────────────────────────────────────────────────────
@@ -492,12 +503,79 @@ export function createInitialAuditLog(): AuditLog {
       ],
       relatedFields: ['other.k1PartnerName', 'other.passiveIncome'],
     },
+
+    // ── Past 2 weeks (8–14 days ago) ──────────────────────────────────────────
+    {
+      id: 'v11',
+      timestamp: now - 10 * DAY,
+      author: 'Jason Hansen',
+      label: 'Mortgage Interest Note',
+      changeType: 'manual_entry',
+      description: versionName('manual_entry', ['interest.notes']),
+      dataSnapshot: { ...snap7, interest: { ...snap7.interest!, notes: 'Primary residence — Form 1098 on file' } },
+      changes: [{ field: 'interest.notes', oldValue: '', newValue: 'Primary residence — Form 1098 on file' }],
+      relatedFields: ['interest.notes'],
+    },
+
+    // ── Past 90 days (31–90 days ago) — move v1 here explicitly ───────────────
+    // v1 at 34 days already lands here; add a second entry at ~60 days
+    {
+      id: 'v12',
+      timestamp: now - 60 * DAY,
+      author: 'Sarah Miller',
+      label: 'Q1 Estimated Payment',
+      changeType: 'manual_entry',
+      description: versionName('manual_entry', ['interest.notes']),
+      dataSnapshot: { ...snap3, interest: { ...snap3.interest!, notes: 'Q1 estimated tax payment recorded' } },
+      changes: [{ field: 'interest.notes', oldValue: '', newValue: 'Q1 estimated tax payment recorded' }],
+      relatedFields: ['interest.notes'],
+    },
+
+    // ── Earlier this year (91+ days ago, same calendar year) ─────────────────
+    {
+      id: 'v13',
+      timestamp: now - 100 * DAY,
+      author: 'David Hansen',
+      label: 'Prior-Year Organizer Import',
+      changeType: 'document_import',
+      description: versionName('document_import', ['income.notes']),
+      dataSnapshot: { ...snap1, income: { ...snap1.income!, notes: 'Imported from 2025 tax organizer PDF' } },
+      changes: [{ field: 'income.notes', oldValue: '', newValue: 'Imported from 2025 tax organizer PDF' }],
+      relatedFields: ['income.notes'],
+    },
+
+    // ── Last year ─────────────────────────────────────────────────────────────
+    {
+      id: 'v14',
+      timestamp: new Date(currentYear - 1, 5, 15, 14, 30).getTime(),
+      author: 'Jason Hansen',
+      label: '2025 Return Baseline',
+      changeType: 'api_import',
+      apiSource: 'TaxDome',
+      description: versionName('api_import', ['income.w2Wages']),
+      dataSnapshot: snap1,
+      changes: [{ field: 'income.w2Wages', oldValue: 0, newValue: 78420 }],
+      relatedFields: ['income.w2Wages'],
+    },
+
+    // ── Older (prior to last year) ────────────────────────────────────────────
+    {
+      id: 'v15',
+      timestamp: new Date(currentYear - 2, 9, 1, 10, 0).getTime(),
+      author: 'Sarah Miller',
+      label: 'Archival Client Migration',
+      changeType: 'copy',
+      description: versionName('copy', ['income.employerName']),
+      dataSnapshot: snap0,
+      changes: [],
+      relatedFields: ['income.employerName'],
+    },
   ]
 
   return {
     versions,
     currentVersionId: 'v10',
-    createdAt: now - 34 * DAY,
+    createdAt: new Date(currentYear - 2, 9, 1, 10, 0).getTime(),
     lastModified: now - 45 * 60000,
     schemaVersion: SCHEMA_VERSION,
   }

@@ -728,9 +728,8 @@
   cursor: help;
 }
 .tm-affix-info-icon {
-  color: var(--action-primary, #3492EF);
+  color: var(--color-icon-secondary, #6b6c72);
   flex-shrink: 0;
-  opacity: 0.75;
   transition: opacity 0.12s;
 }
 .tm-affix-info-anchor:hover .tm-affix-info-icon {
